@@ -1,11 +1,8 @@
 :root {
-  --primary: #264653;
-  /* --secondary: #5BB880;
-  --third: #A1D4E9;
-  --background: #5bb880c4; */
-  --secondary: #b9ebd57b;               /* line 161 ma change garnuu parxaaa */
+  --primary: #4b819661;
+  --secondary: #b9ebd57b;        
   --third: #ffffff;
-  --background: #e6ece1f1;
+  --background: #ffffffff;
   --hoverr: #b9ebd5;
 }
 
@@ -21,10 +18,18 @@ a {
   text-decoration: none;
 }
 
-img {
-  border-radius: 12px;       /* smooth corners */
-  height: auto;
-  display: block;
-  max-width: 100%;
-  object-fit: cover;
+label {
+  color: white;
+}
+
+.button {
+  width: auto;
+  background-color: var(--secondary);
+  padding: 0.3rem;
+  font-size: larger;
+  color: white;
+}
+
+.button:hover {
+  box-shadow: 1px 2px 15px 5px var(--secondary);
 }

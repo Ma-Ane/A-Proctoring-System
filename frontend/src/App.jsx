@@ -4,7 +4,7 @@ import './App.css'
 export default function App() {
   return (
     <>
-      <main className="bg-primary">
+      <main className="bg-background">
         <Outlet />
       </main>
 

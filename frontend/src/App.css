@@ -1,5 +1,5 @@
 :root {
-  --primary: #4b819661;
+  --primary: #2148555a;
   --secondary: #b9ebd57b;        
   --third: #ffffff;
   --background: #ffffffff;
@@ -10,7 +10,7 @@ body {
   font-family: 'Work Sans', sans-serif;
 }
 
-li {
+li {                            
   list-style: none;
 }
 

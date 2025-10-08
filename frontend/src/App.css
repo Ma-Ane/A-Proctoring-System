@@ -1,0 +1,30 @@
+:root {
+  --primary: #264653;
+  /* --secondary: #5BB880;
+  --third: #A1D4E9;
+  --background: #5bb880c4; */
+  --secondary: #b9ebd57b;               /* line 161 ma change garnuu parxaaa */
+  --third: #ffffff;
+  --background: #e6ece1f1;
+  --hoverr: #b9ebd5;
+}
+
+body {
+  font-family: 'Work Sans', sans-serif;
+}
+
+li {
+  list-style: none;
+}
+
+a {
+  text-decoration: none;
+}
+
+img {
+  border-radius: 12px;       /* smooth corners */
+  height: auto;
+  display: block;
+  max-width: 100%;
+  object-fit: cover;
+}

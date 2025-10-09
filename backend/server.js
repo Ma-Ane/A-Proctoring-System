@@ -6,7 +6,7 @@ const connectDB = require('./config_db');
 // 6cBfnFt5MtZSRnQc
 // maharjanmanjit46_db_user
 
-connectDB();
+connectDB(  );
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -18,8 +18,13 @@ app.use(express.json());
 
 
 // created test routes
-const userRoutes = require('./routes/userRoutes');
-app.use('/api/auth', userRoutes);
+  // user routes
+  const userRoutes = require('./routes/userRoutes');
+  app.use('/api/auth', userRoutes);
+
+  // exam routes
+  const examRoutes = require('./routes/examRoutes');
+  app.use('/api/exam', examRoutes); 
 
 
 

@@ -2,7 +2,7 @@ import React from 'react'
 
 const MenuBar = () => {
   return (
-    <div className='flex flex-col bg-background py-10 px-3 gap-10 border-r-2 border-r-gray-500'>
+    <div className='relative flex flex-col bg-background py-10 px-3 gap-10 border-r-2 border-r-gray-500'>
 
         {/* a div for logo and name  */}
         <div className='w-full flex flex-col gap-3 items-center'>
@@ -34,6 +34,15 @@ const MenuBar = () => {
             </li>
             {/* <li className='menu__options'></li> */}
         </ul>
+
+        {/* settings button at last  */}
+        <div className='absolute bottom-3 flex flex-col gap-3 w-full '>
+            <hr className="border-gray-700 w-11/12" />
+            <section className='flex gap-2 justify-center items-center'>
+                <i className="ri-settings-5-line text-2xl"></i>
+                <p className='text-xl'>Settings</p>
+            </section>
+        </div>
     </div>
   )
 }

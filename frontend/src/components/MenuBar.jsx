@@ -1,8 +1,29 @@
-import React from 'react'
+import React, { useState } from 'react'
 
 const MenuBar = () => {
+
+    // to show if notification is clicked ot not
+    const [isnotification , setIsNotification] = useState(false);
+    
+
   return (
     <div className='relative flex flex-col bg-background py-10 px-3 gap-10 border-r-2 border-r-gray-500'>
+
+        {/* show if notification is clicked  */}
+        {
+            isnotification && 
+                <div 
+                    className='absolute top-0 left-0 opacity-80 bg-black w-screen h-screen flex items-center justify-center' 
+                    onClick={() => setIsNotification(false)}
+                >
+                    <div 
+                        className='bg-primary text-white w-1/3 h-1/2 rounded-3xl flex items-center justify-center z-10' 
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                    <p className='text-2xl'>Notification</p>
+                    </div>
+                </div>
+        }
 
         {/* a div for logo and name  */}
         <div className='w-full flex flex-col gap-3 items-center'>
@@ -22,7 +43,7 @@ const MenuBar = () => {
             </li>
             <li className='menu__options'>
                 <i className="ri-notification-3-line"></i>
-                <span>Notifications</span>    
+                <span onClick={() => setIsNotification(true)}>Notifications</span>    
             </li>
             <li className='menu__options'>
                 <i className="ri-file-text-line"></i>

@@ -4,7 +4,7 @@ import UpcomingExams from '../components/UpcomingExams';
 const HomePage = () => {
 
   return (
-    <div className='bg-white w-full h-full p-10'>
+    <div className='home'>
       <h1 className='text-3xl'>Upcoming Exams</h1>
 
       {/* div for entire line below the heading  */}
@@ -21,7 +21,7 @@ const HomePage = () => {
               name="search" 
               id="search" 
               placeholder='Search for exam'
-              className='border-none ml-4'
+              className='border-none ml-4 w-full h-full focus:outline-none'
             />
           </section>
 

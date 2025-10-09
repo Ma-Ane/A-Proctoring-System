@@ -57,3 +57,10 @@ label {
   cursor: pointer;
   background-color: #e4e3e3;
 }
+
+.home {
+  background-color: var(--third);
+  width: 100%;
+  height: 100%;
+  padding: 2.5rem;
+}

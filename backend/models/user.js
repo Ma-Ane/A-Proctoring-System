@@ -7,8 +7,8 @@ const userSchema = new mongoose.Schema({
     age: Number,
     exams: [
         {
-            exam_id: String,
-            score: Number,
+            exam_id: mongoose.Schema.Types.ObjectId,
+            score: String,
             subject: String,
             date: Date
         }

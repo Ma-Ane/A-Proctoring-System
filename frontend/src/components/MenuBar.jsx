@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { Link } from 'react-router-dom';
 
 const MenuBar = () => {
 
@@ -7,7 +8,7 @@ const MenuBar = () => {
     
 
   return (
-    <div className='relative flex flex-col bg-background py-10 px-3 gap-10 border-r-2 border-r-gray-500'>
+    <div className='relative flex flex-col bg-background py-10 px-3 gap-10 border-r-2 border-r-gray-200'>
 
         {/* show if notification is clicked  */}
         {
@@ -39,7 +40,7 @@ const MenuBar = () => {
         <ul className='flex flex-col gap-4'>
             <li className='menu__options'>
                 <i className="ri-user-line"></i>
-                <span>Portfolio</span>    
+                <span><Link to='/portfolio'>Portfolio</Link></span>    
             </li>
             <li className='menu__options'>
                 <i className="ri-notification-3-line"></i>
@@ -47,11 +48,11 @@ const MenuBar = () => {
             </li>
             <li className='menu__options'>
                 <i className="ri-file-text-line"></i>
-                <span>Results</span>    
+                <span><Link to='/results'>Results</Link></span>    
             </li>
             <li className='menu__options'>
                 <i className="ri-reset-left-line"></i>
-                <span>Updates</span>    
+                <span><Link to='/updates'>Updates</Link></span>    
             </li>
             {/* <li className='menu__options'></li> */}
         </ul>

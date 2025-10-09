@@ -27,6 +27,12 @@ const UpcomingExams = () => {
     fetchUpcomingExam();
   }, []);
 
+
+  // to enter into the exam pagee
+  const openTakeExam = () => {
+
+  };
+
   // check if exam is present for that batch or not
   if (upcomingExam.length === 0) return <p>No any upcoming exams. Relax !!</p>
   else return (
@@ -36,9 +42,24 @@ const UpcomingExams = () => {
            upcomingExam.map((exam, index) => (
                 <li className='flex' key={index}>
                     <span className='flex-[1]'>{index+1}</span>
-                    <span className='flex-[4]'>{exam.title}</span>
-                    <span className='flex-[2] text-base'><p className='p-1 border-gray-300 border-2 rounded-md w-fit'>{exam.type}</p></span>
-                    <span className='flex-[2] text-base'><p className='p-1 border-gray-300 border-2 rounded-md w-fit'>{exam.time}</p></span>
+
+                    <span className='flex-[4]'>
+                      <p 
+                        className='hover:cursor-pointer w-fit'
+                        onClick={openTakeExam}
+                      >
+                          {exam.title}
+                      </p>
+                    </span>
+
+                    <span className='flex-[2] text-base'>
+                      <p className='p-1 border-2 rounded-md w-fit bg-slate-100'>{exam.type}</p>
+                    </span>
+
+                    <span className='flex-[2] text-base'>
+                      <p className='p-1 border-2 rounded-md w-fit bg-slate-100'>{exam.time}</p>
+                    </span>
+                    
                     <span className='flex-[2]'>{exam.date.split('T')[0]}</span>
 
                     {/* image milaunuu parxa  */}

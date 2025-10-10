@@ -40,6 +40,13 @@ const MenuBar = () => {
 
         {/* // menu options list  */}
         <ul className='flex flex-col gap-4'>
+            <Link to='/'>
+                <li className='menu__options'>
+                    <i className="ri-home-8-line"></i>
+                    <span>Home</span>    
+                </li>
+            </Link>
+
             <Link to='/portfolio'>
                 <li className='menu__options'>
                     <i className="ri-user-line"></i>
@@ -59,10 +66,10 @@ const MenuBar = () => {
                 </li>
             </Link>
 
-            <Link to='/updates'>
+            <Link to='/instructions'>
                 <li className='menu__options'>
                     <i className="ri-reset-left-line"></i>
-                    <span>Updates</span>    
+                    <span>Instructions</span>    
                 </li>
             </Link>
             {/* <li className='menu__options'></li> */}

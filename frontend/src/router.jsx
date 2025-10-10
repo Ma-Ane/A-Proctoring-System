@@ -4,6 +4,7 @@ import HomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";
 import Portfolio from "./pages/Portfolio";
 import Result from "./pages/Result";
+import Instructions from "./pages/Instructions";
 
 const router = createBrowserRouter([
     {
@@ -14,7 +15,8 @@ const router = createBrowserRouter([
         children: [
             {index: true, element: <HomePage />},
             {path: "/portfolio", element: <Portfolio />},
-            {path: '/results', element: <Result />}
+            {path: '/results', element: <Result />},
+            {path: '/instructions', element: <Instructions />}
         ]
     },
     {

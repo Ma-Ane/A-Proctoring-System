@@ -14,7 +14,8 @@ const userSchema = new mongoose.Schema({
             title: String,
             score: String,
             subject: String,
-            date: Date
+            date: Date,
+            status: String,
         }
     ],
     email: String,

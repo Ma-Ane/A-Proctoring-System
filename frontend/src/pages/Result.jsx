@@ -35,7 +35,7 @@ const Result = () => {
                 
                 const data = await response.json();
                 setExamResults(data);
-                console.log("Exam history fetched");
+                // console.log("Exam history fetched");
             } catch (error) {
                 console.log("Error fetching exam history", error);
             }
@@ -74,7 +74,7 @@ const Result = () => {
                             <span className='flex-[1]'>{index+1}</span>
                             <span className='flex-[5]'>{exam.title}</span>
                             <span className='flex-[1]'>{exam.date.split("T")[0]}</span>
-                            <span className='flex-[1]'>{exam.status}</span>
+                            <span className={`flex-[1] ${exam.status === 'Graded' ? 'text-green-600' : 'text-red-600'}`}>{exam.status}</span>
                             <span className='flex-[1]'>{exam.score}</span>
                         </li>
                     ))

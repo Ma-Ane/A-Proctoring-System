@@ -40,22 +40,31 @@ const MenuBar = () => {
 
         {/* // menu options list  */}
         <ul className='flex flex-col gap-4'>
-            <li className='menu__options'>
-                <i className="ri-user-line"></i>
-                <span><Link to='/portfolio'>Portfolio</Link></span>    
-            </li>
-            <li className='menu__options'>
-                <i className="ri-notification-3-line"></i>
-                <span onClick={() => setIsNotification(true)}>Notifications</span>    
-            </li>
-            <li className='menu__options'>
-                <i className="ri-file-text-line"></i>
-                <span><Link to='/results'>Results</Link></span>    
-            </li>
-            <li className='menu__options'>
-                <i className="ri-reset-left-line"></i>
-                <span><Link to='/updates'>Updates</Link></span>    
-            </li>
+            <Link to='/portfolio'>
+                <li className='menu__options'>
+                    <i className="ri-user-line"></i>
+                    <span>Portfolio</span>    
+                </li>
+            </Link>
+
+                <li onClick={() => setIsNotification(true)} className='menu__options'>
+                    <i className="ri-notification-3-line"></i>
+                    <span >Notifications</span>    
+                </li>
+
+            <Link to='/results'>
+                <li className='menu__options'>
+                    <i className="ri-file-text-line"></i>
+                    <span>Results</span>    
+                </li>
+            </Link>
+
+            <Link to='/updates'>
+                <li className='menu__options'>
+                    <i className="ri-reset-left-line"></i>
+                    <span>Updates</span>    
+                </li>
+            </Link>
             {/* <li className='menu__options'></li> */}
         </ul>
 

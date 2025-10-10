@@ -1,0 +1,88 @@
+import React, { useEffect, useState } from 'react'
+
+const Result = () => {
+
+    // for test, we are using id 
+    const id = "68e77f98280f76d210c8bc14";
+
+    // a sample of the exam results to be printed
+    const [examResults, setExamResults] = useState([
+        {
+            title: "Computer Test",
+            date: "2002-01-01",
+            status: "Graded",
+            score: 70,
+        },
+        {
+            title: "Computer Test",
+            date: "2002-01-01",
+            status: "Graded",
+            score: 70,
+        },
+        {
+            title: "Computer Test",
+            date: "2002-01-01",
+            status: "Graded",
+            score: 70,
+        },
+    ]);
+
+    // fetch the exam history of the user
+    useEffect(() => {
+        const fetchExamHistory= async () => {
+            try {
+                const response = await fetch(`http://localhost:3000/api/auth/get_exam/${encodeURIComponent(id)}`);
+                
+                const data = await response.json();
+                setExamResults(data);
+                console.log("Exam history fetched");
+            } catch (error) {
+                console.log("Error fetching exam history", error);
+            }
+        };
+
+        fetchExamHistory();
+    }, []);
+
+  return (
+    <div className='home flex flex-col items-center gap-4'>
+        {/* section for student image and name  */}
+        <section className='flex flex-col gap-3 items-center'>
+            <img 
+                src="logo.webp" 
+                alt="" 
+                className='size-28 rounded-full'
+            />
+            <h1 className='text-2xl font-bold'>Hari Bansa Acharya</h1>
+        </section>
+
+        {/* to show the results of the user  */}
+        <div className='flex flex-col w-full mt-10'>
+            <ul>
+                <li className='flex text-xl font-bold mb-6'>
+                    <span className='flex-[1]'>S.N</span>
+                    <span className='flex-[5]'>Title</span>
+                    <span className='flex-[1]'>Date</span>
+                    <span className='flex-[1]'>Status</span>
+                    <span className='flex-[1]'>Marks</span>
+                </li>
+
+                {/* loop through the fetched result of the user  */}
+                {
+                    examResults.map((exam, index) => (
+                        <li key={index} className='flex text-base mb-5'>
+                            <span className='flex-[1]'>{index+1}</span>
+                            <span className='flex-[5]'>{exam.title}</span>
+                            <span className='flex-[1]'>{exam.date.split("T")[0]}</span>
+                            <span className='flex-[1]'>{exam.status}</span>
+                            <span className='flex-[1]'>{exam.score}</span>
+                        </li>
+                    ))
+                }
+            </ul>
+        </div>
+    </div>
+  )
+}
+
+export default Result

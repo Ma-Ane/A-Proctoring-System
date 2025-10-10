@@ -7,7 +7,11 @@ const userSchema = new mongoose.Schema({
     age: Number,
     exams: [
         {
-            exam_id: mongoose.Schema.Types.ObjectId,
+            exam_id: {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: 'exam',
+            },
+            title: String,
             score: String,
             subject: String,
             date: Date

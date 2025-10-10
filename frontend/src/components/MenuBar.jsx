@@ -28,11 +28,13 @@ const MenuBar = () => {
 
         {/* a div for logo and name  */}
         <div className='w-full flex flex-col gap-3 items-center'>
-            <img 
-                src="logo.webp" 
-                alt="Logo" 
-                className='rounded-full size-20'
-            />
+            <Link to='/'>
+                <img 
+                    src="logo.webp" 
+                    alt="Logo" 
+                    className='rounded-full size-20'
+                />
+            </Link>
             <h1 className='text-2xl'>A Proctoring System</h1>
         </div>
 

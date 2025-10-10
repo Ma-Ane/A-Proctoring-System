@@ -34,7 +34,7 @@ const UpcomingExams = () => {
   };
 
   // check if exam is present for that batch or not
-  if (upcomingExam.length === 0) return <p>No any upcoming exams. Relax !!</p>
+  if (upcomingExam.length === 0) return <p className='absolute top-1/2 text-xl left-1/2'>No any upcoming exams. Relax !!</p>
   else return (
     <ul className='flex flex-col gap-3 mt-4 text-lg'>
         {

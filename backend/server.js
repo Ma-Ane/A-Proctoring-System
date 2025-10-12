@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 require("dotenv").config();
 const connectDB = require('./config_db');
+const path = require('path');
 
 // 6cBfnFt5MtZSRnQc
 // maharjanmanjit46_db_user
@@ -26,6 +27,10 @@ app.use(express.json());
   const examRoutes = require('./routes/examRoutes');
   app.use('/api/exam', examRoutes); 
 
+  // upload image routes
+  const uploadRoutes = require('./routes/uploadImageRoutes');
+  app.use("/api/upload", uploadRoutes);
+  app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 
 // Test route

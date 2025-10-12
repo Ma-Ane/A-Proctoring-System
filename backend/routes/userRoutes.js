@@ -5,13 +5,13 @@ const router = express.Router();
 const User = require('../models/user');
 
 
-router.post('/login', async (req, res) => {
+router.post('/register', async (req, res) => {
     try {
         // destructure the data from the req body
-        const { name, batch, age, gender, role, email, password } = req.body;
+        const { name, batch, age, gender, role, image, email, password } = req.body;
 
         // create new instance of the user model and save it
-        const newUser = User({name, batch, age, gender, role, email, password});
+        const newUser = User({name, batch, age, gender, role, image, email, password});
         await newUser.save();
 
         // return success message
@@ -37,5 +37,8 @@ router.get('/get_exam/:id', async (req, res) => {
         res.status(500).json({error: error.message});
     }
 });
+
+
+
 
 module.exports = router;

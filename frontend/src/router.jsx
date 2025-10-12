@@ -5,6 +5,7 @@ import LoginPage from "./pages/LoginPage";
 import Portfolio from "./pages/Portfolio";
 import Result from "./pages/Result";
 import Instructions from "./pages/Instructions";
+import TakeExam from "./pages/TakeExam";
 
 const router = createBrowserRouter([
     {
@@ -19,9 +20,15 @@ const router = createBrowserRouter([
             {path: '/instructions', element: <Instructions />}
         ]
     },
+
     {
         path: '/login',
         element: <LoginPage/>
+    },
+
+    {
+        path: "/take-exam",
+        element: <TakeExam/>
     }
 ]);
 

@@ -1,6 +1,10 @@
 import React, { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom';
 
 const UpcomingExams = () => {
+
+  // for nmavigation to a new page
+  const navigate = useNavigate();
 
   // for now we are fetching exams only for BCT batch
   const batch = "BCT";
@@ -29,8 +33,13 @@ const UpcomingExams = () => {
 
 
   // to enter into the exam pagee
-  const openTakeExam = () => {
+  const openTakeExam = (exam) => {
+      // check exam date and time
 
+
+
+      // go the exam page
+      navigate('/take-exam');
   };
 
   // check if exam is present for that batch or not
@@ -46,7 +55,7 @@ const UpcomingExams = () => {
                     <span className='flex-[4]'>
                       <p 
                         className='hover:cursor-pointer w-fit'
-                        onClick={openTakeExam}
+                        onClick={() => openTakeExam(exam)}
                       >
                           {exam.title}
                       </p>

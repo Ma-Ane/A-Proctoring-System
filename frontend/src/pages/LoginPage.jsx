@@ -4,6 +4,9 @@ const LoginPage = () => {
 
     // for checking if login or sign up y user
     const [isLogIn, setIsLogIn] = useState(false);
+    // for input user photo
+    const [fileName, setFileName] = useState("No file chosen");
+    const [fileData, setFileData] = useState(null);
 
     // for storing values before creating a new user
     const [tempUser, setTempUser] = useState({
@@ -12,6 +15,7 @@ const LoginPage = () => {
         age: 0,
         gender: "",
         role: "",
+        image: "",
         email: "", 
         password: ""
     });
@@ -25,27 +29,63 @@ const LoginPage = () => {
 
     // save the user to db after clicking the singup button
     const saveUserToDB = async () => {
+        if (!fileData) return alert("No image input");
+
         try {
-            const res = await fetch('http://localhost:3000/api/auth/login', {
+            const imageName = `user_${Date.now()}_${fileData.name}`;
+
+            // Payload for MongoDB
+            const payload = { ...tempUser, image: imageName };
+
+            // Upload the file
+            const formData = new FormData();
+            formData.append("image", fileData, imageName);
+
+            const res = await fetch("http://localhost:3000/api/upload", {
                 method: "POST",
-                headers: {
-                    "Content-Type": 'application/json', // type of data to send
-                },
-                body: JSON.stringify(tempUser)
+                body: formData
             });
 
-            // check if response if ok or not
-            if (res.ok) {
-                const data = await res.json();
-                console.log(data);
+            if (!res.ok) return console.log("Error uploading image");
+            // console.log("Image uploaded successfully");
+
+            // Store user info
+            const userRes = await fetch("http://localhost:3000/api/auth/register", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            });
+
+            if (userRes.ok) {
+                const data = await userRes.json();
+                // console.log("User created:", data);
             } else {
-                const error = await res.json();
-                console.log(error);
+                const err = await userRes.json();
+                console.log("Error creating user:", err);
             }
         } catch (error) {
             console.log("Error creating user", error);
         }
     };
+
+
+
+    // for handling the user input image
+    const handleImageChange = (e) => {
+        const file = e.target.files[0];
+
+        if (file) {
+            setFileName(file.name);
+            setFileData(file);
+
+            // convert to base64 and store
+            const reader = new FileReader();
+            reader.onload = () => {
+                localStorage.setItem("userImagePreview", reader.result); // just for preview
+            };
+            reader.readAsDataURL(file);
+        }
+    };  
 
   return (
     <div className='flex items-center relative justify-center'>
@@ -187,6 +227,21 @@ const LoginPage = () => {
                                     <option value="Teacher">Teacher</option>
                                 </select>
                             </div>
+                        </div>
+
+                        {/* image of the user  */}
+                        <div className='flex flex-col gap-1 text-white text-xl my-3'>
+                            <label htmlFor='imageInput' className='hover:cursor-pointer'>Select profile image</label>
+
+                            {/* hidden file input  */}
+                            <input 
+                                id='imageInput'
+                                type='file' 
+                                className='hidden'
+                                accept='image/'
+                                onChange={handleImageChange}
+                            />
+
                         </div>
 
                         <div className='flex flex-col gap-1'>

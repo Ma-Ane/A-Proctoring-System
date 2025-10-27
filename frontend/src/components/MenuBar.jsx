@@ -14,11 +14,11 @@ const MenuBar = () => {
         {
             isnotification && 
                 <div 
-                    className='absolute top-0 left-0 opacity-80 bg-black w-screen h-screen flex items-center justify-center' 
+                    className='fixed inset-0 opacity-80 bg-black w-screen h-screen flex items-center justify-center' 
                     onClick={() => setIsNotification(false)}
                 >
                     <div 
-                        className='bg-primary text-white w-1/3 h-1/2 rounded-3xl flex items-center justify-center z-10' 
+                        className='bg-primary text-white w-11/12 sm:w-2/3 md:w-1/3 h-1/2 rounded-3xl flex items-center justify-center z-10' 
                         onClick={(e) => e.stopPropagation()}
                     >
                     <p className='text-2xl'>Notification</p>

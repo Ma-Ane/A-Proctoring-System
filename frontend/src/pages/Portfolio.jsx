@@ -52,7 +52,7 @@ const Portfolio = () => {
             <h1 className='text-2xl font-bold'>Hari Bansa Acharya</h1>
         </section>
 
-        <section className='flex justify-between w-full px-5 text-xl'>
+        <section className='flex sm:flex-col lg:flex-row justify-between w-full px-5 text-xl'>
             <span 
                 className={`p-2 hover:cursor-pointer hover:bg-primary rounded-lg ${isAttendance ? 'bg-primary' : ''}`}
                 onClick={() => setIsAttendance(true)}
@@ -60,7 +60,7 @@ const Portfolio = () => {
                     Attendance
             </span>
             <span 
-                className={`p-2 hover:cursor-pointer hover:bg-primary rounded-lg ${!isAttendance ? 'bg-primary' : ''}`}
+                className={`p-2 w-fit hover:cursor-pointer hover:bg-primary rounded-lg ${!isAttendance ? 'bg-primary' : ''}`}
                 onClick={() => setIsAttendance(false)}
             >
                     Personal Details
@@ -95,7 +95,7 @@ const Portfolio = () => {
                 )
             :
             // personal detials section
-            <div className='grid grid-cols-2 w-full gap-6 pt-4 px-3'>
+            <div className='grid lg:grid-cols-2 sm:grid-cols-1 w-full gap-6 pt-4 px-3'>
                 {/* for left side part  */}
                 <section className='flex flex-col gap-5'>
                     <div className='flex flex-row gap-2 items-center'>

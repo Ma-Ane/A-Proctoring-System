@@ -53,13 +53,15 @@ const Result = () => {
                 alt="" 
                 className='size-28 rounded-full'
             />
-            <h1 className='text-2xl font-bold'>Hari Bansa Acharya</h1>
+            
+            <h1 className='text-lg sm:text-xl md:text-2xl font-bold'>Hari Bansa Acharya</h1>
+
         </section>
 
         {/* to show the results of the user  */}
         <div className='flex flex-col w-full mt-10'>
             <ul>
-                <li className='flex text-xl font-bold mb-6'>
+                <li className='grid grid-cols-5 text-xl font-bold mb-6 md:grid-cols-5 sm:grid-cols-3 gap-2'>
                     <span className='flex-[1]'>S.N</span>
                     <span className='flex-[5]'>Title</span>
                     <span className='flex-[1]'>Date</span>
@@ -70,7 +72,7 @@ const Result = () => {
                 {/* loop through the fetched result of the user  */}
                 {
                     examResults.map((exam, index) => (
-                        <li key={index} className='flex text-base mb-5'>
+                        <li key={index} className='grid lg:grid-cols-5 text-base mb-5 sm:grid-cols-3 gap-2'>
                             <span className='flex-[1]'>{index+1}</span>
                             <span className='flex-[5]'>{exam.title}</span>
                             <span className='flex-[1]'>{exam.date.split("T")[0]}</span>

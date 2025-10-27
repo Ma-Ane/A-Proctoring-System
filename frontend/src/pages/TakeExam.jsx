@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import CameraStream from '../components/CameraStream';
 
 const TakeExam = () => {
@@ -11,6 +11,32 @@ const TakeExam = () => {
 
     // captured image
     const [capturedImage, setCapturedImage] = useState("");
+
+    // to check for match from the backend API (face verification)
+    useEffect(() => {
+        const verifyUser = async () => {
+            if (!capturedImage) return;
+
+            try {
+                const payload = {
+                    image: capturedImage
+                };
+
+                const response = await fetch('http://127.0.0.1:8000/check-verification', {
+                    method: "POST", 
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await response.json();
+            } catch (error) {
+                
+            }
+        }
+        verifyUser();
+    }, [capturedImage]);
 
   return (
     <div className='relative h-screen flex flex-col items-center lg:p-16 md:p-10 sm:p-4'>
@@ -54,6 +80,13 @@ const TakeExam = () => {
                             onClick={() => setIsUserVerify(true)}>Verify</button>               
 
                     </div>
+                )
+            }
+
+            {
+                // page to check the micropphone of the user
+                (page === 3) && (
+                    <div>Check the user microphone</div>
                 )
             }
         </>

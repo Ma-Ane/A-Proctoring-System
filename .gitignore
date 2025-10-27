@@ -1,0 +1,8 @@
+# Ignore Python virtual environments
+**/venv*/
+**/__pycache__/
+*.pyc
+
+# Ignore ML model files
+backend/ML_models/
+backend/ML_routes/venv312

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import CameraStream from '../components/CameraStream';
+import MicrophoneCheck from '../components/MicrophoneCheck';
 
 const TakeExam = () => {
 
@@ -13,16 +14,19 @@ const TakeExam = () => {
     const [capturedImage, setCapturedImage] = useState("");
 
     // message if the user is verified or not
-    const [verifyMessage, setVerifyMessage] = useState(null);
+    const [faceVerified, setfaceVerified] = useState(false);
 
+    // set the profile image of the user from the db
+    const [userProfileImage, setUserProfileImage] = useState('');
 
     // to set all the variables to default when mounting the component
     useEffect(() => {
         if (page === 2) {
             // reset verification-related state
             setCapturedImage("");
-            setVerifyMessage(null);
+            setfaceVerified(false);
             setIsUserVerify(false);
+            setUserProfileImage('');
         }
     }, [page]);
 
@@ -43,6 +47,8 @@ const TakeExam = () => {
             // get the image from the uploads folders
             const response = await fetch(`http://localhost:3000/uploads/${data.image}`);
             const blob = await response.blob();
+            setUserProfileImage(URL.createObjectURL(blob));
+
             formData.append('hd_image', blob, 'hd_image.png');
 
         } catch (error) {
@@ -66,8 +72,8 @@ const TakeExam = () => {
             const data = await response.json();
 
             // set the output from the backend to the variable
-            setVerifyMessage(data.message);
-            console.log(data)
+            if (data.message == "Same person") setfaceVerified(true);
+            else setfaceVerified(false);
         } catch (error) {
             console.log("Error from verificaiton model", error);
         }
@@ -103,9 +109,9 @@ const TakeExam = () => {
                 // second page to verify the user 
                 (page === 2) && (
                     <div 
-                        className={`mt-16 p-5 items-center gap-6 transition-all duration-700 ${verifyMessage === null  ? 'flex flex-col'   : 'grid grid-cols-2 place-items-center gap-20'}`}>
+                        className={`mt-16 p-5 items-center gap-6 transition-all duration-1000 ${faceVerified === false  ? 'flex flex-col'   : 'grid sm:grid-cols-2 place-items-center gap-20'}`}>
 
-                        <div className='mt-16 p-5  flex flex-col items-center gap-6'>
+                        <div className='mt-  flex flex-col items-center gap-6'>
 
                             {/* duita hunxa... euta image hernaa ko lagi.... eut chaii info dekhaunee.... tara paxii after verified  */}
                             <CameraStream 
@@ -124,13 +130,23 @@ const TakeExam = () => {
                         </div>
 
                         
-                        {/* if  something is returned from the model or backend FastAPI  */}
+                        {/* if the user is verified then show the profile card */}
                         {
-                            (verifyMessage) && (
-                                <div className='flex flex-col gap-3 justify-center items-center'>
-                                    <img src='logo.webp' className='size-36'></img>
+                            (faceVerified) && (
+                                <div className='flex flex-col gap-3 items-center h-fit py-5 bg-blue-300 w-fit px-20 mt-8 rounded-3xl profile__card'>
+                                    <img 
+                                        src={userProfileImage} 
+                                        className='size-36 object-cover rounded-full mt-3'
+                                    />
+                                    
+                                    <li className='text-2xl font-bold'>Ali Baba</li>
+
                                     {/* naam match hunxa ki hudainaa check garnuu parxa  */}
-                                    <h1 className='text-2xl'>Ali Baba</h1>
+                                    <ul className='flex flex-col gap-3'>
+                                        <li className='text-xl'>BCT</li>
+                                        <li className='text-xl'>test1#gmail.com</li>
+                                        <li className='text-xl'>Student</li>
+                                    </ul>
                                 </div>
                             )
                         }
@@ -141,27 +157,36 @@ const TakeExam = () => {
             {
                 // page to check the micropphone of the user
                 (page === 3) && (
-                    <div>Check the user microphone</div>
+                    <MicrophoneCheck />
                 )
             }
         </>
 
-        <div className="absolute bottom-6 px-10 w-full flex justify-between">
-            <button 
-                className='exam-button' 
-                onClick={() => {
-                    if (page === 1) setPage(1)
-                    else setPage((prev) => prev-1)
-                }}
-            >
-                Back
-            </button>
+        <div className={`absolute bottom-6 items-end px-10 w-full flex ${page===1 ? "justify-end" : "justify-between"}`}>
+            {            
+                (page !== 1) ? 
+                    <button 
+                        className='exam-button' 
+                        onClick={() => {
+                            setPage((prev) => Math.max(1, prev - 1));
+                        }}
+                    >
+                        Back
+                    </button>  
+                :
+                    <div/>
+            } 
 
             <button 
                 className='exam-button' 
                 onClick={() => {
-                    if (page === 3) setPage(3)
-                    else setPage((prev) => prev+1)
+                    // check if the user is verified or not
+                    if (page === 2 && !faceVerified) {
+                        alert("Face Verification required.");
+                        return;
+                    }
+
+                    setPage((prev) => Math.min(3, prev+1));
                 }}
             >
                 Next

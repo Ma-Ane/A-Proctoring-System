@@ -1,6 +1,6 @@
 :root {
-  --primary: #2148555a;
-  --secondary: #b9ebd57b;        
+  --primary: #782dfa9c;
+  --secondary: #1d45737b;        
   --third: #ffffff;
   --background: rgb(255, 255, 255);
   --hoverr: #b9ebd5;
@@ -24,29 +24,28 @@ label {
 
 .button {
   width: auto;
-  background-color: var(--secondary);
+  background-color: var(--primary);
   padding: 0.3rem;
   font-size: larger;
   color: white;
 }
 
 .button:hover {
-  box-shadow: 1px 2px 15px 5px var(--secondary);
+  box-shadow: 1px 2px 15px 5px var(--primary);
 }
 
 /* exam buttons  */
 .exam-button {
-  background-color: var(--primary);
+  background-color: var(--secondary);
   padding: 0.7rem 2.2rem;
   font-size: 1.3rem;
-  border-radius: 20px;
+  border-radius: 15px;
 }
 
 .exam-button:hover {
   position: cursor;
-  background-color: aquamarine;
+  background-color: rgba(93, 46, 168, 0.306);
 }
-
 
 
 .menu__options {
@@ -78,4 +77,9 @@ label {
   width: 100%;
   height: 100%;
   padding: 2.5rem;
+}
+
+.profile__card:hover {
+  cursor: pointer; 
+  box-shadow: var(--secondary) 10px 10px 70px ;
 }

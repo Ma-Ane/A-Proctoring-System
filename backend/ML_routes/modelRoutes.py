@@ -22,8 +22,14 @@ app.add_middleware(
 )
 
 
-# load the model on startup
-@app.on_event("startup")
+@app.get('/')
+def root():
+    print('FastAPI is running')
+
+
+### --------------- Face Verification ---------------
+
+# function to load the model
 def load_model():
     global model
 
@@ -36,22 +42,13 @@ def load_model():
         print("❌ Error loading the model:", e)
 
 
-
-@app.get('/')
-def root():
-    print('FastAPI is running')
-
-
-### --------------- Face Verification ---------------
-
-# type of data to expect from the frontend
-# class Image(BaseModel):
-#     image: str
-
+# API to verify the user
 @app.post('/check-verification')
 async def check_verification(hd_image: UploadFile = File(...), webcam_image: UploadFile = File(...)):
     # Check if the model is loaded
     global model
+
+    load_model()
     if model is None:
         raise HTTPException(status_code=500, detail="Model not loaded yet")
 

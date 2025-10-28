@@ -3,7 +3,7 @@ import React, { useState } from 'react'
 const LoginPage = () => {
 
     // for checking if login or sign up y user
-    const [isLogIn, setIsLogIn] = useState(false);
+    const [isLogIn, setIsLogIn] = useState(true);
     // for input user photo
     const [fileName, setFileName] = useState("No file chosen");
     const [fileData, setFileData] = useState(null);
@@ -96,7 +96,7 @@ const LoginPage = () => {
         />
 
         {/* main div for the content  */}
-        <div className='bg-primary p-6 rounded-xl absolute flex flex-col items-center justify-center'>
+        <div className='p-6 rounded-xl absolute flex flex-col items-center justify-center px-10'>
 
             <img 
                 src="logo.webp" 

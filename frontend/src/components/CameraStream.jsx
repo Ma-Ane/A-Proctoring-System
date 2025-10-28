@@ -78,12 +78,12 @@ export default function CameraStream({isUserVerify, onCapture}) {
     <>
       <div className="flex w-full justify-between mb-5">
         <button onClick={startCamera} disabled={isStreaming}>Start Camera</button>
-        <button onClick={stopCamera} disabled={!isStreaming}>Stop Camera</button>
+        <button onClick={stopCamera} disabled={!isStreaming} className="hover:cursor-pointer">Stop Camera</button>
       </div>
 
       {error && <div className="text-red-500">{error}</div>}
 
-      <div style={{ width: "100%", maxWidth: 900, aspectRatio: "16/9", background: "#000" }}>
+      <div style={{ width: "100%", maxWidth: 900, aspectRatio: "16/9", background: "#004" }}>
         <video
           ref={videoRef}
           playsInline

@@ -43,10 +43,10 @@ export default function CameraStream({isUserVerify, onCapture}) {
     return () => {
       stopCamera();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // to capture the image at that instance
+  // returns a base64 object or string
     const captureImage = () => {
         // console.log("catpure functionc alled")
         if (!videoRef.current) return null;
@@ -60,15 +60,17 @@ export default function CameraStream({isUserVerify, onCapture}) {
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
         // Convert to Base64 string
+        // frontend ma capture gardaa base64 ma rakhnee and before sending to backend conert to Blob
         const capturedImage = canvas.toDataURL("image/png");
 
         if (onCapture) onCapture(capturedImage); // send to parent
+        // console.log("Capture Image done")
     };
 
+    // to capture the image
     useEffect(() => {
-    if (isUserVerify) {
-        captureImage();
-    }
+      // console.log("Clicked")
+      captureImage();
     }, [isUserVerify]); // runs whenever isUserVerify changes
 
 

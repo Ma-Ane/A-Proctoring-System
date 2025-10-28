@@ -12,31 +12,47 @@ const TakeExam = () => {
     // captured image
     const [capturedImage, setCapturedImage] = useState("");
 
-    // to check for match from the backend API (face verification)
+    // message if the user is verified or not
+    const [verifyMessage, setVerifyMessage] = useState(null);
+
+
+    // to set all the variables to default when mounting the component
     useEffect(() => {
-        const verifyUser = async () => {
-            if (!capturedImage) return;
-
-            try {
-                const payload = {
-                    image: capturedImage
-                };
-
-                const response = await fetch('http://127.0.0.1:8000/check-verification', {
-                    method: "POST", 
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify(payload)
-                });
-
-                const data = await response.json();
-            } catch (error) {
-                
-            }
+        if (page === 2) {
+            // reset verification-related state
+            setCapturedImage("");
+            setVerifyMessage(null);
+            setIsUserVerify(false);
         }
-        verifyUser();
-    }, [capturedImage]);
+    }, [page]);
+
+
+    // to check for match from the backend API (face verification)
+    const handleVerifyUser = async () => {
+        if (!capturedImage) return;
+
+        // change the image to Blob before sending it to the backend
+        const blob = await fetch(capturedImage).then((res) => res.blob());
+
+        // prepare for upload to the backend
+        const formData = new FormData();
+        formData.append('image', blob, 'capture.png');        // name, data, filename
+
+        try {
+            const response = await fetch('http://127.0.0.1:8000/check-verification', {
+                method: "POST", 
+                body: formData
+            });
+
+            const data = await response.json();
+
+            // set the output from the backend to the variable
+            setVerifyMessage(data);
+            console.log(data)
+        } catch (error) {
+            console.log("Error from verificaiton model", error);
+        }
+    }
 
   return (
     <div className='relative h-screen flex flex-col items-center lg:p-16 md:p-10 sm:p-4'>
@@ -67,18 +83,38 @@ const TakeExam = () => {
             {
                 // second page to verify the user 
                 (page === 2) && (
-                    <div className='mt-16 p-5  flex flex-col items-center gap-6'>
+                    <div 
+                        className={`mt-16 p-5 items-center gap-6 transition-all duration-700 ${verifyMessage === null  ? 'flex flex-col'   : 'grid grid-cols-2 place-items-center gap-20'}`}>
 
-                        {/* duita hunxa... euta image hernaa ko lagi.... eut chaii info dekhaunee.... tara paxii after verified  */}
-                        <CameraStream 
-                            isUserVerify={isUserVerify} 
-                            onCapture={(img) => setCapturedImage(img)}
-                        />
+                        <div className='mt-16 p-5  flex flex-col items-center gap-6'>
 
-                        <button 
-                            className='exam-button' 
-                            onClick={() => setIsUserVerify(true)}>Verify</button>               
+                            {/* duita hunxa... euta image hernaa ko lagi.... eut chaii info dekhaunee.... tara paxii after verified  */}
+                            <CameraStream 
+                                isUserVerify={isUserVerify} 
+                                onCapture={(img) => setCapturedImage(img)}
+                            />
 
+                            <button 
+                                className='exam-button' 
+                                onClick={() => {
+                                    setIsUserVerify((prev) => !prev);
+                                    handleVerifyUser() ;
+                                }}
+                            >Verify
+                            </button>               
+                        </div>
+
+                        
+                        {/* if  something is returned from the model or backend FastAPI  */}
+                        {
+                            (verifyMessage) && (
+                                <div className='flex flex-col gap-3 justify-center items-center'>
+                                    <img src='logo.webp' className='size-36'></img>
+                                    {/* naam match hunxa ki hudainaa check garnuu parxa  */}
+                                    <h1 className='text-2xl'>Ali Baba</h1>
+                                </div>
+                            )
+                        }
                     </div>
                 )
             }
@@ -92,8 +128,26 @@ const TakeExam = () => {
         </>
 
         <div className="absolute bottom-6 px-10 w-full flex justify-between">
-            <button className='exam-button' onClick={() => setPage((prev) => prev-1)}>Back</button>
-            <button className='exam-button' onClick={() => setPage((prev) => prev+1)}>Next</button>
+            <button 
+                className='exam-button' 
+                onClick={() => {
+                    if (page === 1) setPage(1)
+                    else setPage((prev) => prev-1)
+                }}
+            >
+                Back
+            </button>
+
+            <button 
+                className='exam-button' 
+                onClick={() => {
+                    if (page === 3) setPage(3)
+                    else setPage((prev) => prev+1)
+                }}
+            >
+                Next
+            </button>
+
         </div>
     </div>
   )

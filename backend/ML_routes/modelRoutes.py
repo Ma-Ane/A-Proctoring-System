@@ -26,8 +26,10 @@ app.add_middleware(
 @app.on_event("startup")
 def load_model():
     global model
+
     MODEL_PATH = "backend/ML_models/new-with-min-200"
     NUM_CLASSES = 517  # From training file 
+    
     try:
         model = load_face_verification_model(MODEL_PATH, NUM_CLASSES)
     except Exception as e:
@@ -43,25 +45,24 @@ def root():
 ### --------------- Face Verification ---------------
 
 # type of data to expect from the frontend
-class Image(BaseModel):
-    image: str
+# class Image(BaseModel):
+#     image: str
 
 @app.post('/check-verification')
-async def check_verification(payload: Image):
+async def check_verification(image: UploadFile = File(...)):
     # Check if the model is loaded
     global model
     if model is None:
         raise HTTPException(status_code=500, detail="Model not loaded yet")
 
-
     try:
-        header, encoded = payload.image.split(",", 1) if "," in payload.image else ("", payload.image)
-        image_bytes = base64.b64decode(encoded)
+        # read bytes
+        image_bytes = await image.read()
 
-        image = Image.open(BytesIO(image_bytes))
+        # conver to PIl for model
+        pil_image = Image.open(io.BytesIO(image_bytes)).convert('RGB')
 
-        embedding = get_embedding(model, image)
-        return {"embedding": embedding}
+        return {"filename": image.filename, "size": len(image_bytes)}
     
     except Exception as e:
         return {"error": str(e)}

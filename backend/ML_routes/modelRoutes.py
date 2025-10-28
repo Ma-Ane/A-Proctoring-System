@@ -8,7 +8,7 @@ from io import BytesIO
 
 
 # Custom file 
-from backend.ML_helper_function.faceVerification import load_face_verification_model, get_embedding
+from backend.ML_helper_function.faceVerification import load_face_verification_model, get_embedding, cosine_similarity
 
 
 app = FastAPI()
@@ -49,7 +49,7 @@ def root():
 #     image: str
 
 @app.post('/check-verification')
-async def check_verification(image: UploadFile = File(...)):
+async def check_verification(hd_image: UploadFile = File(...), webcam_image: UploadFile = File(...)):
     # Check if the model is loaded
     global model
     if model is None:
@@ -57,12 +57,31 @@ async def check_verification(image: UploadFile = File(...)):
 
     try:
         # read bytes
-        image_bytes = await image.read()
+        hd_image_bytes = await hd_image.read()
+        webcam_image_bytes = await webcam_image.read()
 
         # conver to PIl for model
-        pil_image = Image.open(io.BytesIO(image_bytes)).convert('RGB')
+        hd_img = Image.open(io.BytesIO(hd_image_bytes)).convert('RGB')
+        webcam_img = Image.open(io.BytesIO(webcam_image_bytes)).convert('RGB')
 
-        return {"filename": image.filename, "size": len(image_bytes)}
+        # get embeddings from the model
+        emb1 = get_embedding(model, webcam_img)
+        print("S")
+        emb2 = get_embedding(model, hd_img)
+
+        print("DS")
+        if emb1 is not None and emb2 is not None:
+            similarity = cosine_similarity(emb1, emb2)
+            print(f"\n🧩 Cosine Similarity: {similarity:.4f}")
+            threshold = 0.146     # from LFW dataset
+
+            if similarity >= threshold:
+                return {"message": "Same person"}
+            else:
+                return {'message': "Different person"}
+
+
+        return {"message": "Error in verification process."}
     
     except Exception as e:
         return {"error": str(e)}

@@ -29,9 +29,13 @@ app.use(express.json());
 
   // upload image routes
   const uploadRoutes = require('./routes/uploadImageRoutes');
-  app.use("/api/upload", uploadRoutes);
+  app.use("/api/uploads", uploadRoutes);
   app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
+
+  // fetch user image for verificaiton
+  const imageRoutes = require('./routes/gerUserImageRoutes');
+  app.use('/getUserImage', imageRoutes);
 
 // Test route
 app.get("/", (req, res) => {

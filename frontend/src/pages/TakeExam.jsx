@@ -31,15 +31,34 @@ const TakeExam = () => {
     const handleVerifyUser = async () => {
         if (!capturedImage) return;
 
+        const formData = new FormData();
+        
+        // original image from db
+        // get the image name of the user from the mongodb and change the image into blob
+        try {
+            const res = await fetch(`http://localhost:3000/getUserImage/${encodeURIComponent("Ali Baba")}`);
+
+            const data = await res.json();
+
+            // get the image from the uploads folders
+            const response = await fetch(`http://localhost:3000/uploads/${data.image}`);
+            const blob = await response.blob();
+            formData.append('hd_image', blob, 'hd_image.png');
+
+        } catch (error) {
+            console.log(error)
+        }
+
+        // image from the user webcam
         // change the image to Blob before sending it to the backend
         const blob = await fetch(capturedImage).then((res) => res.blob());
 
         // prepare for upload to the backend
-        const formData = new FormData();
-        formData.append('image', blob, 'capture.png');        // name, data, filename
+        formData.append('webcam_image', blob, 'webcam_image.png');        // name, data, filename
 
+        //////////////////// aahile just eutaa naam diyeraa pathakoo xa
         try {
-            const response = await fetch('http://127.0.0.1:8000/check-verification', {
+            const response = await fetch(`http://127.0.0.1:8000/check-verification`, {
                 method: "POST", 
                 body: formData
             });
@@ -47,7 +66,7 @@ const TakeExam = () => {
             const data = await response.json();
 
             // set the output from the backend to the variable
-            setVerifyMessage(data);
+            setVerifyMessage(data.message);
             console.log(data)
         } catch (error) {
             console.log("Error from verificaiton model", error);
@@ -58,7 +77,7 @@ const TakeExam = () => {
     <div className='relative h-screen flex flex-col items-center lg:p-16 md:p-10 sm:p-4'>
         <h1 className='text-5xl'>Ready to take Exam ?</h1>
 
-        <>
+        <>  
             {
                 // the first page to show is the instructions page
                 (page === 1) && (

@@ -147,16 +147,16 @@ def crop_with_margin(img, box, margin=0.3):
     y2_new = min(img.height, y2 + margin*h)
     return img.crop((x1_new, y1_new, x2_new, y2_new))
 
-def detect_crop_and_normalize(image_path, margin=0.3):
-    try:
-        img = Image.open(image_path).convert("RGB")
-    except:
-        print(f"❌ Cannot open {image_path}")
-        return None
+def detect_crop_and_normalize(img, margin=0.3):
+    # try:
+    #     img = Image.open(image_path).convert("RGB")
+    # except:
+    #     print(f"❌ Cannot open {image_path}")
+    #     return None
 
     boxes, probs = mtcnn.detect(img)
     if boxes is None or len(boxes)==0:
-        print(f"❌ No face detected: {image_path}")
+        print(f"❌ No face detected: {img}")
         return None
 
     box = boxes[0]
@@ -190,7 +190,7 @@ def get_embedding(model, image_path):
 
 
 # -------------- Cosine similarity -------------------
-def cosine_similarity_np(emb1, emb2):
+def cosine_similarity(emb1, emb2):
     return np.dot(emb1, emb2) / (np.linalg.norm(emb1) * np.linalg.norm(emb2))
 
 # -------------- FOr saving the input image into db -------------------

@@ -19,6 +19,11 @@ const TakeExam = () => {
     // set the profile image of the user from the db
     const [userProfileImage, setUserProfileImage] = useState('');
 
+    // to verify if the mic is working
+    const [micVerified, setMicVerified] = useState(false);
+    const [isMicAvailable, setIsMicAvailable] = useState(true);
+
+
     // to set all the variables to default when mounting the component
     useEffect(() => {
         if (page === 2) {
@@ -28,8 +33,20 @@ const TakeExam = () => {
             setIsUserVerify(false);
             setUserProfileImage('');
         }
+        
+        if (page === 3) {
+            setMicVerified(false);
+            setIsMicAvailable(true);
+        }
     }, [page]);
 
+
+    // to capture the image of the user
+    useEffect(() => {
+        if (isUserVerify && capturedImage) {
+            handleVerifyUser();
+        }
+    }, [capturedImage]);
 
     // to check for match from the backend API (face verification)
     const handleVerifyUser = async () => {
@@ -123,7 +140,6 @@ const TakeExam = () => {
                                 className='exam-button' 
                                 onClick={() => {
                                     setIsUserVerify((prev) => !prev);
-                                    handleVerifyUser() ;
                                 }}
                             >Verify
                             </button>               
@@ -155,9 +171,26 @@ const TakeExam = () => {
             }
 
             {
-                // page to check the micropphone of the user
-                (page === 3) && (
-                    <MicrophoneCheck />
+                page === 3 && (
+                    <>
+                        <MicrophoneCheck 
+                            micVerified={micVerified} 
+                            setMicVerified={setMicVerified}
+                            setIsMicAvailable={setIsMicAvailable}
+                        />
+
+                        <p className="mt-4 text-lg text-gray-700">
+                            {micVerified
+                            ? "✅ Microphone verified! You can proceed."
+                            : isMicAvailable
+                            ? "🎧 Speak something to verify your microphone..."
+                            : "❌ No Microphone Detected or Permission Denied"}
+                        </p>
+
+                        <button className='mt-24 text-2xl bg-primary p-4 rounded-xl text-white hover:cursor-pointer profile__card'>
+                            Start Exam
+                        </button>
+                    </>
                 )
             }
         </>
@@ -177,20 +210,33 @@ const TakeExam = () => {
                     <div/>
             } 
 
-            <button 
-                className='exam-button' 
-                onClick={() => {
-                    // check if the user is verified or not
-                    if (page === 2 && !faceVerified) {
-                        alert("Face Verification required.");
-                        return;
-                    }
+            {
+                // if last page .i.e 3 then no next button
+                (page !== 3) ? 
+                    <button 
+                        className='exam-button' 
+                        onClick={() => {
 
-                    setPage((prev) => Math.min(3, prev+1));
-                }}
-            >
-                Next
-            </button>
+                            // check if the user is verified or not
+                            if (page === 2 && !faceVerified) {
+                                alert("Face Verification required.");
+                                return;
+                            }
+                            
+                            if (page === 3 && !micVerified) {
+                                alert("Microphone verification required.");
+                                return;
+                            }
+
+
+                            setPage((prev) => Math.min(3, prev+1));
+                        }}
+                    >
+                        Next
+                    </button>
+                :
+                <div />
+            }
 
         </div>
     </div>

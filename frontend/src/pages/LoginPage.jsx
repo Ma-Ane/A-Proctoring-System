@@ -1,12 +1,18 @@
 import React, { useState } from 'react'
+import { useNavigate } from 'react-router-dom';
 
 const LoginPage = () => {
+
+    const navigate = useNavigate();
 
     // for checking if login or sign up y user
     const [isLogIn, setIsLogIn] = useState(true);
     // for input user photo
     const [fileName, setFileName] = useState("No file chosen");
     const [fileData, setFileData] = useState(null);
+
+    // for storing the login info the user 
+    const [logInUser, setLogInUser] = useState({email: "", password: ""})
 
     // for storing values before creating a new user
     const [tempUser, setTempUser] = useState({
@@ -69,7 +75,6 @@ const LoginPage = () => {
     };
 
 
-
     // for handling the user input image
     const handleImageChange = (e) => {
         const file = e.target.files[0];
@@ -86,6 +91,31 @@ const LoginPage = () => {
             reader.readAsDataURL(file);
         }
     };  
+
+    // to handle the login option for the user
+    const handleLogIn = async() => {
+        try {
+            const res = await fetch('http://localhost:3000/api/auth/verify_credentials', {
+                method: "POST", 
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(logInUser)
+            });
+
+            const data = await res.json();
+            
+            if (data.error)
+                alert(data.error);
+            else {
+                alert("User found. Press OK to go to home screen.")
+                navigate('/');
+            }
+
+        } catch (error) {
+            
+        }
+    };
 
   return (
     <div className='flex items-center relative justify-center'>
@@ -116,7 +146,8 @@ const LoginPage = () => {
                             <label className='text-xl'>Email</label>
                             <input
                                 type='email'
-                                value=''
+                                value={logInUser.email}
+                                onChange={(e) => setLogInUser((prev) => ({...prev, email: e.target.value}))}
                                 className='p-1 rounded-md'
                                 placeholder='aaa@gmail.com'
                             />
@@ -127,14 +158,15 @@ const LoginPage = () => {
                             <label className='text-xl'>Password</label>
                             <input
                                 type='password'
-                                value=''
+                                value={logInUser.password}
+                                onChange={(e) => setLogInUser((prev) => ({...prev, password: e.target.value}))}
                                 className='p-1 rounded-md'
                                 placeholder='********'
                             />
                         </div>
 
                         {/* button for login  */}
-                        <button className='button'>Login</button>
+                        <button className='button' onClick={handleLogIn}>Login</button>
 
                         <p className='flex w-full justify-end gap-3 text-white'>
                             Don't have an account? 

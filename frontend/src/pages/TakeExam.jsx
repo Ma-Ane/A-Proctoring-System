@@ -88,6 +88,9 @@ const TakeExam = () => {
 
             const data = await response.json();
 
+            // if the user face is not detected
+            if (data.error) alert(data.error)
+                
             // set the output from the backend to the variable
             if (data.message == "Same person") setfaceVerified(true);
             else setfaceVerified(false);
@@ -180,16 +183,25 @@ const TakeExam = () => {
                         />
 
                         <p className="mt-4 text-lg text-gray-700">
-                            {micVerified
-                            ? "✅ Microphone verified! You can proceed."
-                            : isMicAvailable
-                            ? "🎧 Speak something to verify your microphone..."
-                            : "❌ No Microphone Detected or Permission Denied"}
+                            {
+                                micVerified ? 
+                                    "✅ Microphone verified! You can proceed."
+                                : 
+                                    isMicAvailable ? 
+                                        "🎧 Speak something to verify your microphone..."
+                                    : 
+                                        "❌ No Microphone Detected or Permission Denied"
+                            }
                         </p>
 
-                        <button className='mt-24 text-2xl bg-primary p-4 rounded-xl text-white hover:cursor-pointer profile__card'>
-                            Start Exam
-                        </button>
+                        {
+                            micVerified ? 
+                                <button className='mt-24 text-2xl bg-primary p-4 rounded-xl text-white hover:cursor-pointer profile__card'>
+                                    Start Exam
+                                </button>
+                            :
+                                <div />
+                        }
                     </>
                 )
             }

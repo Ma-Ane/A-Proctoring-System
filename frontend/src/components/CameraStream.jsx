@@ -83,7 +83,7 @@ export default function CameraStream({isUserVerify, onCapture}) {
 
       {error && <div className="text-red-500">{error}</div>}
 
-      <div style={{ width: "100%", maxWidth: 900, aspectRatio: "16/9", background: "#004" }}>
+      <div style={{ width: "100%", maxWidth: 900, aspectRatio: "16/9", background: "#004", borderRadius: 10 }}>
         <video
           ref={videoRef}
           playsInline

@@ -63,10 +63,13 @@ async def check_verification(hd_image: UploadFile = File(...), webcam_image: Upl
 
         # get embeddings from the model
         emb1 = get_embedding(model, webcam_img)
-        print("S")
+
+        # check if the embeddings is returned
+        if emb1 is None:
+            return {"error": "Face not detected."}
+
         emb2 = get_embedding(model, hd_img)
 
-        print("DS")
         if emb1 is not None and emb2 is not None:
             similarity = cosine_similarity(emb1, emb2)
             print(f"\n🧩 Cosine Similarity: {similarity:.4f}")

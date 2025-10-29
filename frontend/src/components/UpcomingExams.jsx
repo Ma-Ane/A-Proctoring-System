@@ -62,11 +62,11 @@ const UpcomingExams = () => {
                     </span>
 
                     <span className='flex-[2] text-base'>
-                      <p className='p-1 border-2 rounded-md w-fit bg-slate-100'>{exam.type}</p>
+                      <p className='p-1 border-2 rounded-md w-fit bg-primary text-white'>{exam.type}</p>
                     </span>
 
                     <span className='flex-[2] text-base'>
-                      <p className='p-1 border-2 rounded-md w-fit bg-slate-100'>{exam.time}</p>
+                      <p className='p-1'>{exam.time}</p>
                     </span>
                     
                     <span className='flex-[2]'>{exam.date.split('T')[0]}</span>

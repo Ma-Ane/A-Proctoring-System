@@ -107,12 +107,12 @@ const TakeExam = () => {
             {
                 // the first page to show is the instructions page
                 (page === 1) && (
-                    <div className='mt-16 bg-slate-200 p-5'>
-                        <p className="text-xl mt-6 text-gray-700">
+                    <div className='mt-16 bg-third rounded-lg pb-10 text-white p-5'>
+                        <p className="text-xl mt-6">
                             To ensure fairness and security, this exam uses AI-based monitoring. 
                             Please read the following instructions carefully:
                         </p>
-                        <ul className="pl-5 text-base text-gray-600 space-y-1 mt-5">
+                        <ul className="pl-5 text-base space-y-1 mt-5">
                             <li>✔ Your identity will be verified before starting the exam.</li>
                             <li>✔ Your <b>camera and microphone</b> will remain active during the exam.</li>
                             <li>✔ Only <b>suspicious activities</b> (e.g., multiple faces, unusual sounds, frequent looking away) are recorded.</li>
@@ -152,23 +152,36 @@ const TakeExam = () => {
                         {/* if the user is verified then show the profile card */}
                         {
                             (faceVerified) && (
-                                <div className='flex flex-col gap-3 items-center h-fit py-5 bg-blue-300 w-fit px-20 mt-8 rounded-3xl profile__card'>
+                                <div className='flex flex-col gap-3 items-center h-fit py-5 bg-third text-white w-fit px-6 mt-8 rounded-3xl profile__card'>
                                     <img 
                                         src={userProfileImage} 
                                         className='size-36 object-cover rounded-full mt-3'
                                     />
                                     
-                                    <li className='text-2xl font-bold'>Ali Baba</li>
+                                    <li className='text-2xl font-bold mb-4'>Ali Baba</li>
 
                                     {/* naam match hunxa ki hudainaa check garnuu parxa  */}
-                                    <ul className='flex flex-col gap-3'>
-                                        <li className='text-xl'>BCT</li>
-                                        <li className='text-xl'>test1#gmail.com</li>
-                                        <li className='text-xl'>Student</li>
+                                    <ul className="flex flex-col gap-4 text-xl">
+                                        <li className="grid grid-cols-2">
+                                            <label className="font-bold">Batch:</label>
+                                            <span>BCT</span>
+                                        </li>
+
+                                        <li className="grid grid-cols-2">
+                                            <label className="font-bold">Email:</label>
+                                            <span>test1@gmail.com</span>
+                                        </li>
+
+                                        <li className="grid grid-cols-2">
+                                            <label className="font-bold">Role:</label>
+                                            <span>Student</span>
+                                        </li>
                                     </ul>
+
+
                                 </div>
                             )
-                        }
+                        }   
                     </div>
                 )
             }

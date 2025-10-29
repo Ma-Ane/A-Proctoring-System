@@ -4,15 +4,41 @@ const MicrophoneCheck = ({ micVerified, setMicVerified, setIsMicAvailable }) => 
   const canvasRef = useRef(null);
   const animationRef = useRef(null);
   const audioCtxRef = useRef(null);
-  // keep latest micVerified in a ref so draw() sees updates
+  const streamRef = useRef(null);
   const micVerifiedRef = useRef(micVerified);
 
-  // sync prop -> ref whenever micVerified changes
-  useEffect(() => { micVerifiedRef.current = micVerified; }, [micVerified]);
+  // Reset micVerified whenever component mounts
+  useEffect(() => {
+    setMicVerified(false);
+    micVerifiedRef.current = false;
+  }, [setMicVerified]);
+
+  // Sync prop -> ref
+  useEffect(() => {
+    micVerifiedRef.current = micVerified;
+  }, [micVerified]);
+
+  const stopCheck = () => {
+    // Stop animation
+    cancelAnimationFrame(animationRef.current);
+
+    // Stop audio context
+    if (audioCtxRef.current) {
+      try { audioCtxRef.current.close(); } catch {}
+    }
+
+    // Stop microphone tracks
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((t) => t.stop());
+    }
+
+    console.log("🎤 Microphone check stopped — verification complete.");
+  };
 
   const startVisualization = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      streamRef.current = stream;
       setIsMicAvailable(true);
 
       const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -30,18 +56,15 @@ const MicrophoneCheck = ({ micVerified, setMicVerified, setIsMicAvailable }) => 
       const canvas = canvasRef.current;
       if (!canvas) {
         console.error("Canvas not ready");
-        stream.getTracks().forEach(t => t.stop());
+        stream.getTracks().forEach((t) => t.stop());
         return;
       }
       const canvasCtx = canvas.getContext("2d");
 
-      const stopCheck = () => {
-        cancelAnimationFrame(animationRef.current);
-        try { audioCtx.close(); } catch {}
-        stream.getTracks().forEach((t) => t.stop());
-      };
-
       const draw = () => {
+        // Stop drawing if verified
+        if (micVerifiedRef.current) return;
+
         animationRef.current = requestAnimationFrame(draw);
         analyser.getByteFrequencyData(dataArray);
 
@@ -62,10 +85,11 @@ const MicrophoneCheck = ({ micVerified, setMicVerified, setIsMicAvailable }) => 
 
         const avgVolume = total / bufferLength;
 
-        // use the ref here to check current verified state
         if (avgVolume > 30 && !micVerifiedRef.current) {
           setMicVerified(true);
-          micVerifiedRef.current = true; // update ref immediately
+          micVerifiedRef.current = true;
+
+          // Stop audio and microphone tracks
           stopCheck();
         }
       };
@@ -79,11 +103,10 @@ const MicrophoneCheck = ({ micVerified, setMicVerified, setIsMicAvailable }) => 
 
   useEffect(() => {
     startVisualization();
+
     return () => {
-      cancelAnimationFrame(animationRef.current);
-      if (audioCtxRef.current) audioCtxRef.current.close().catch(()=>{});
+      stopCheck(); // cleanup on unmount
     };
-    // note: empty deps -> run once on mount
   }, []);
 
   return (

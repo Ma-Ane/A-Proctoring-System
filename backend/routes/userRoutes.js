@@ -10,6 +10,7 @@ router.post('/register', async (req, res) => {
         // destructure the data from the req body
         const { name, batch, age, gender, role, image, email, password } = req.body;
 
+        
         // create new instance of the user model and save it
         const newUser = User({name, batch, age, gender, role, image, email, password});
         await newUser.save();

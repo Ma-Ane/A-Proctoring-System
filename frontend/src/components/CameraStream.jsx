@@ -13,6 +13,7 @@ export default function CameraStream({isUserVerify, onCapture}) {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
       streamRef.current = stream;
+
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         // play may return a promise; ignore rejection in some browsers
@@ -83,7 +84,7 @@ export default function CameraStream({isUserVerify, onCapture}) {
 
       {error && <div className="text-red-500">{error}</div>}
 
-      <div style={{ width: "100%", maxWidth: 900, aspectRatio: "16/9", background: "#004", borderRadius: 10 }}>
+      <div style={{ width: "100%", maxWidth: 900, aspectRatio: "16/9", background: "var(--third)", borderRadius: 10 }}>
         <video
           ref={videoRef}
           playsInline

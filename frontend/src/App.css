@@ -1,7 +1,7 @@
 :root {
   --primary: #17101bc9;
   --secondary: #a292a6e6;        
-  --third: #ffffff;
+  --third: #260755e2;
   --background: rgb(255, 255, 255);
   --hoverr: #b9ebd5;
 }
@@ -36,7 +36,8 @@ label {
 
 /* exam buttons  */
 .exam-button {
-  background-color: var(--secondary);
+  background-color: var(--primary);
+  color: white; 
   padding: 0.7rem 2.2rem;
   font-size: 1.3rem;
   border-radius: 15px;
@@ -44,7 +45,8 @@ label {
 
 .exam-button:hover {
   position: cursor;
-  background-color: rgba(93, 46, 168, 0.306);
+  background-color: var(--primary);
+  filter: brightness(3.2)
 }
 
 
@@ -54,7 +56,7 @@ label {
   gap: 0.9rem;
   font-size: 1.1rem;
   padding: 0.4rem 1rem;
-  border-radius: 15px;
+  border-radius: 10px;
 }
 
 .menu__options:hover {
@@ -69,11 +71,12 @@ label {
 
 .home__show__items:hover {
   cursor: pointer;
-  background-color: #e4e3e3;
+  background-color: var(--primary);
+  color: white
 }
 
 .home {
-  background-color: var(--third);
+  background-color: var(--background);
   width: 100%;
   height: 100%;
   padding: 2.5rem;
@@ -81,5 +84,5 @@ label {
 
 .profile__card:hover {
   cursor: pointer; 
-  box-shadow: var(--secondary) 10px 10px 70px ;
+  box-shadow: var(--third) 10px 10px 70px ;
 }

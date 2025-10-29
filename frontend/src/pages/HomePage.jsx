@@ -26,7 +26,7 @@ const HomePage = () => {
           </section>
 
           {/* section for filter button  */}
-          <section className='border-black border-2 p-1.5 rounded-lg flex gap-1 hover:cursor-pointer'>
+          <section className='border-black border-2 p-1.5 rounded-lg flex gap-1 hover:cursor-pointer text-white bg-primary'>
             <i className="ri-filter-line text-xl"></i>
             <span className='text-lg'>Filter</span>
           </section>

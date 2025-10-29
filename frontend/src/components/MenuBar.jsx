@@ -6,6 +6,8 @@ const MenuBar = () => {
     // to show if notification is clicked ot not
     const [isnotification , setIsNotification] = useState(false);
     
+    // to set the active menu that is being clicked
+    const [activeMenu, setActiveMenu] = useState('home');
 
   return (
     <div className='relative flex flex-col bg-background py-10 px-3 gap-10 border-r-2 border-r-gray-200'>
@@ -40,15 +42,15 @@ const MenuBar = () => {
 
         {/* // menu options list  */}
         <ul className='flex flex-col gap-4'>
-            <Link to='/'>
-                <li className='menu__options'>
+            <Link to='/' onClick={() => setActiveMenu('home')}>
+                <li className={`menu__options ${activeMenu === 'home' ? 'bg-primary text-white hover:!bg-primary' : ''}`}>
                     <i className="ri-home-8-line"></i>
                     <span>Home</span>    
                 </li>
             </Link>
 
-            <Link to='/portfolio'>
-                <li className='menu__options'>
+            <Link to='/portfolio' onClick={() => setActiveMenu('portfolio')}>
+                <li className={`menu__options ${activeMenu === 'portfolio' ? 'bg-primary text-white hover:!bg-primary' : ''}`}>
                     <i className="ri-user-line"></i>
                     <span>Portfolio</span>    
                 </li>
@@ -59,15 +61,15 @@ const MenuBar = () => {
                     <span >Notifications</span>    
                 </li>
 
-            <Link to='/results'>
-                <li className='menu__options'>
+            <Link to='/results' onClick={() => setActiveMenu('results')}>
+                <li className={`menu__options ${activeMenu === 'results' ? 'bg-primary text-white hover:!bg-primary' : ''}`}>
                     <i className="ri-file-text-line"></i>
                     <span>Results</span>    
                 </li>
             </Link>
 
-            <Link to='/instructions'>
-                <li className='menu__options'>
+            <Link to='/instructions' onClick={() => setActiveMenu('instructions')}>
+                <li className={`menu__options ${activeMenu === 'instructions' ? 'bg-primary text-white hover:!bg-primary' : ''}`}>
                     <i className="ri-reset-left-line"></i>
                     <span>Instructions</span>    
                 </li>

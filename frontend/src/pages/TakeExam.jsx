@@ -1,8 +1,12 @@
 import React, { useEffect, useState } from 'react'
 import CameraStream from '../components/CameraStream';
 import MicrophoneCheck from '../components/MicrophoneCheck';
+import { Link, useParams } from 'react-router-dom';
 
 const TakeExam = () => {
+
+    // get the data from the parene about the exam title 
+    const { title } = useParams();
 
     // to track the page 
     const [page, setPage] = useState(1);
@@ -99,6 +103,7 @@ const TakeExam = () => {
         }
     }
 
+
   return (
     <div className='relative h-screen flex flex-col items-center lg:p-16 md:p-10 sm:p-4'>
         <h1 className='text-5xl'>Ready to take Exam ?</h1>
@@ -177,8 +182,6 @@ const TakeExam = () => {
                                             <span>Student</span>
                                         </li>
                                     </ul>
-
-
                                 </div>
                             )
                         }   
@@ -209,9 +212,13 @@ const TakeExam = () => {
 
                         {
                             micVerified ? 
-                                <button className='mt-24 text-2xl bg-primary p-4 rounded-xl text-white hover:cursor-pointer profile__card'>
-                                    Start Exam
-                                </button>
+                                <Link to={`/start-exam/${title}`}>
+                                    <button 
+                                        className='mt-24 text-2xl bg-primary p-4 rounded-xl text-white hover:cursor-pointer profile__card'
+                                    >
+                                        Start Exam
+                                    </button>
+                                </Link>
                             :
                                 <div />
                         }

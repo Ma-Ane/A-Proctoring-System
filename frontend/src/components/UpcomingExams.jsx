@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 const UpcomingExams = () => {
 
@@ -32,15 +32,6 @@ const UpcomingExams = () => {
   }, []);
 
 
-  // to enter into the exam pagee
-  const openTakeExam = (exam) => {
-      // check exam date and time
-
-
-
-      // go the exam page
-      navigate('/take-exam');
-  };
 
   // check if exam is present for that batch or not
   if (upcomingExam.length === 0) return <p className='absolute top-1/2 text-xl left-1/2'>No any upcoming exams. Relax !!</p>
@@ -53,12 +44,13 @@ const UpcomingExams = () => {
                     <span className='flex-[1]'>{index+1}</span>
 
                     <span className='flex-[4]'>
-                      <p 
-                        className='hover:cursor-pointer w-fit'
-                        onClick={() => openTakeExam(exam)}
-                      >
-                          {exam.title}
-                      </p>
+                      <Link to={`take-exam/${exam.title}`}>
+                        <p 
+                          className='hover:cursor-pointer w-fit'
+                        >
+                            {exam.title}
+                        </p>
+                      </Link>
                     </span>
 
                     <span className='flex-[2] text-base'>

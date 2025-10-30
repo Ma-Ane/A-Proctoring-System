@@ -6,6 +6,7 @@ import Portfolio from "./pages/Portfolio";
 import Result from "./pages/Result";
 import Instructions from "./pages/Instructions";
 import TakeExam from "./pages/TakeExam";
+import StartExam from "./pages/StartExam";
 
 const router = createBrowserRouter([
     {
@@ -27,8 +28,12 @@ const router = createBrowserRouter([
     },
 
     {
-        path: "/take-exam",
+        path: "/take-exam/:title",
         element: <TakeExam/>
+    },
+    {
+        path: '/start-exam/:title',
+        element: <StartExam />
     }
 ]);
 

@@ -1,8 +1,25 @@
 const mongoose = require('mongoose');
 const express = require('express');
 const router = express.Router();
+// for hasing the password
+const bcrypt = require('bcrypt');
 
 const User = require('../models/user');
+
+
+// a function to take plain text and hash 
+async function hashPassword (password) {
+    const SALT = 10;         // higher means more secure, but slower
+    const hashedPassword = await bcrypt.hash(password, SALT);
+    return hashedPassword;
+}
+
+// a function to validate the hashed password
+async function verifyPassword (plainPassword, hashedPassword) {
+    const isMatch = await bcrypt.compare(plainPassword, hashedPassword);
+    return isMatch;             // returns true is the password is verified
+}
+
 
 // to sgnup the user an save it in the db
 router.post('/register', async (req, res) => {
@@ -10,9 +27,11 @@ router.post('/register', async (req, res) => {
         // destructure the data from the req body
         const { name, batch, age, gender, role, image, email, password } = req.body;
 
-        
+        // hash the password before saving it into the db
+        const hashedPassword = await hashPassword(password);
+
         // create new instance of the user model and save it
-        const newUser = User({name, batch, age, gender, role, image, email, password});
+        const newUser = await User({name, batch, age, gender, role, image, email, password: hashedPassword});
         await newUser.save();
 
         // return success message
@@ -50,7 +69,8 @@ router.post('/verify_credentials', async(req, res) => {
         if (!foundUser) throw new Error("User with such email not found");
 
         // verify the password of the user
-        if (foundUser.password == password)
+        const isMatch = await verifyPassword(password, foundUser.password);
+        if (isMatch)
             res.status(200).json({message: "User found"});
         else
             res.status(401).json({error: "Incorrect Password"});

@@ -53,7 +53,7 @@ const Portfolio = () => {
         </section>
 
         {/* // for attentance and personal details button  */}
-        <section className='flex sm:flex-col lg:flex-row justify-between w-full px-5 text-xl'>
+        <section className='flex sm:flex-row flex-col justify-between w-full px-5 text-xl'>
             <span 
                 className={`p-2 hover:cursor-pointer focus:text-white rounded-lg ${isAttendance ? 'bg-primary text-white' : ''}`}
                 onClick={() => setIsAttendance(true)}

@@ -8,14 +8,14 @@ const HomePage = () => {
       <h1 className='text-3xl'>Upcoming Exams</h1>
 
       {/* div for entire line below the heading  */}
-      <div className='flex justify-between mt-10'>
+      <div className='flex justify-between mt-10 flex-col gap-5 sm:flex-row'>
 
         {/* for search bar and some filters  */}
         <div className='flex gap-3 w-full'>
 
           {/* section for search  */}
           <section className='border-black border-2 p-1.5 rounded-lg w-1/3 flex items-center'>
-            <i className="ri-search-line"></i>
+            <i className="ri-search-line hover:cursor-pointer"></i>
             <input 
               type="text" 
               name="search" 

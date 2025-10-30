@@ -32,7 +32,7 @@ const MicrophoneCheck = ({ micVerified, setMicVerified, setIsMicAvailable }) => 
       streamRef.current.getTracks().forEach((t) => t.stop());
     }
 
-    console.log("🎤 Microphone check stopped — verification complete.");
+    // console.log("🎤 Microphone check stopped — verification complete.");
   };
 
   const startVisualization = async () => {

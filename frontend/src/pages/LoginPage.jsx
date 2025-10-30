@@ -7,6 +7,7 @@ const LoginPage = () => {
 
     // for checking if login or sign up y user
     const [isLogIn, setIsLogIn] = useState(true);
+
     // for input user photo
     const [fileName, setFileName] = useState("No file chosen");
     const [fileData, setFileData] = useState(null);
@@ -18,7 +19,7 @@ const LoginPage = () => {
     const [tempUser, setTempUser] = useState({
         name: "",
         batch: "",
-        age: 0,
+        age: 1,
         gender: "",
         role: "",
         image: "",
@@ -35,6 +36,15 @@ const LoginPage = () => {
 
     // save the user to db after clicking the singup button
     const saveUserToDB = async () => {
+        // to check if all the input fields are filled or not (except image)
+        const hasEmpty = Object.entries(tempUser)
+            .filter(([key]) => key !== "image")
+            .some(([_, v]) => v === '' || v === null || v === undefined);
+
+
+        if (hasEmpty) return alert("All fields are required to be filled")
+
+        // check if the suser has attached their image
         if (!fileData) return alert("No image input");
 
         try {
@@ -47,7 +57,7 @@ const LoginPage = () => {
             const formData = new FormData();
             formData.append("image", fileData, imageName);
 
-            const res = await fetch("http://localhost:3000/api/upload", {
+            const res = await fetch("http://localhost:3000/api/uploads", {
                 method: "POST",
                 body: formData
             });
@@ -64,6 +74,8 @@ const LoginPage = () => {
 
             if (userRes.ok) {
                 const data = await userRes.json();
+                alert (`User with ${data.name} created successfully.`)
+                navigate('/');
                 // console.log("User created:", data);
             } else {
                 const err = await userRes.json();
@@ -212,13 +224,14 @@ const LoginPage = () => {
                                     <option value="BCT">BCT</option>
                                     <option value="BCE">BCE</option>
                                     <option value="BEX">BEX</option>
-                                    <option value="Other">OtherX</option>
+                                    <option value="Other">Other</option>
                                 </select>
                             </div>                         
                             <div className='flex flex-col gap-1'>
                                 <label className='text-xl'>Age</label>
                                 <input
                                     type='number'
+                                    min="1"
                                     name='age'
                                     value={tempUser.age}
                                     onChange={handleTempUser}

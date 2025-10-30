@@ -11,8 +11,8 @@ const storage = multer.diskStorage({
   },
   filename: function (req, file, cb) {
     // Generate unique name: timestamp + original name
-    const uniqueName = `${Date.now()}_${file.originalname}`;
-    cb(null, uniqueName);
+    // const uniqueName = `${Date.now()}_${file.originalname}`;
+    cb(null, file.originalname);
   }
 });
 
@@ -23,7 +23,7 @@ router.post("/", upload.single("image"), (req, res) => {
   if (!req.file) return res.status(400).json({ error: "No file uploaded" });
 
   // Return filename to frontend
-  res.json({ filename: req.file.filename });
+  res.json({ filename: req.file.filename });  
 });
 
 module.exports = router;

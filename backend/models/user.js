@@ -19,6 +19,7 @@ const userSchema = new mongoose.Schema({
         }
     ],
     image: String,
+    embedding: [Number],
     email: String,
     password: String,
     role: String

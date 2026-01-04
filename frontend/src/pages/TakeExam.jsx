@@ -58,22 +58,15 @@ const TakeExam = () => {
 
         const formData = new FormData();
         
-        // original image from db
-        // get the image name of the user from the mongodb and change the image into blob
+        // Fetch user's stored embedding
         try {
-            const res = await fetch(`http://localhost:3000/getUserImage/${encodeURIComponent("Ali Baba")}`);
-
+            const res = await fetch(`http://localhost:3000/api/auth/get_embedding/${encodeURIComponent(id)}`);
             const data = await res.json();
-
-            // get the image from the uploads folders
-            const response = await fetch(`http://localhost:3000/uploads/${data.image}`);
-            const blob = await response.blob();
-            setUserProfileImage(URL.createObjectURL(blob));
-
-            formData.append('hd_image', blob, 'hd_image.png');
-
+            formData.append('user_image_embedding', JSON.stringify(data.embedding));
         } catch (error) {
-            console.log(error)
+            console.log("Error fetching embedding:", error);
+            alert("Failed to fetch user data for verification.");
+            return;
         }
 
         // image from the user webcam

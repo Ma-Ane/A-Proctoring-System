@@ -74,8 +74,8 @@ const LoginPage = () => {
 
             if (userRes.ok) {
                 const data = await userRes.json();
-                alert (`User with ${data.name} created successfully.`)
-                navigate('/');
+                alert(`User with ${data.name} created successfully. Please log in.`);
+                setIsLogIn(true);   
                 // console.log("User created:", data);
             } else {
                 const err = await userRes.json();

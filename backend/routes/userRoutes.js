@@ -1,8 +1,10 @@
-const mongoose = require('mongoose');
+//const mongoose = require('mongoose');
 const express = require('express');
 const router = express.Router();
 // for hasing the password
 const bcrypt = require('bcrypt');
+const path = require('path');
+const fs = require('fs');
 
 const User = require('../models/user');
 
@@ -31,7 +33,7 @@ router.post('/register', async (req, res) => {
         const hashedPassword = await hashPassword(password);
 
         // Resolve the image file path based on the filename string
-        const imagePath = path.join(__dirname, 'public', 'images', image);  // Adjust to your actual image storage path
+        const imagePath = path.join(__dirname, '..', 'uploads', image);  // Adjust to your actual image storage path
 
         // Check if the image exists before proceeding
         if (!fs.existsSync(imagePath)) {
@@ -42,22 +44,26 @@ router.post('/register', async (req, res) => {
         const imageBuffer = fs.readFileSync(imagePath);
 
         // Sending image to FastAPI to get face embedding
+        // no form-data import
+
+
         const formData = new FormData();
-        formData.append('hd_image', imageBuffer, image);  // 'image' is the filename passed by the user
+        const blob = new Blob([imageBuffer]);
 
-        // FastAPI URL where register_user is running
-        const fastAPIURL = 'http://127.0.0.1:8000/register_user';  // Replace with your actual FastAPI URL
+        formData.append('hd_image', blob, image);
 
-        const response = await axios.post(fastAPIURL, formData, {
-            headers: {
-                'Content-Type': 'multipart/form-data',
-                ...formData.getHeaders(),
-            },
+        const response = await fetch('http://127.0.0.1:8000/register-user', {
+            method: 'POST',
+            body: formData
         });
 
-        // Assuming the response from FastAPI contains the embedding as { embedding: [...] }
-        const embedding = response.data.embedding;
-        // create new instance of the user model and save it
+        if (!response.ok) {
+            throw new Error('FastAPI request failed');
+        }
+
+        const data = await response.json();
+        const embedding = data.embedding;
+
         const newUser = await User({name, batch, age, gender, role, image, embedding, email, password: hashedPassword});
         await newUser.save();
 
@@ -86,12 +92,12 @@ router.get('/get_exam/:id', async (req, res) => {
 });
 
 // get embedding of current user from db
-router.get('/get_embedding/:id', async (req, res) => {
+router.get('/get_embedding/:email', async (req, res) => {
     try {
-        const { id } = req.params;
+        const { email } = req.params;
 
         // to find only one user, use findOne
-        const foundUser = await User.findOne({_id: id});
+        const foundUser = await User.findOne({ email });
         if (!foundUser) throw new Error ("User not found");
 
         // only send the exam details to the frontend

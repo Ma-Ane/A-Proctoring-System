@@ -1,4 +1,4 @@
-from fastapi import FastAPI, UploadFile, File, HTTPException
+from fastapi import FastAPI, UploadFile, File, HTTPException, Form
 from fastapi.middleware.cors import CORSMiddleware
 from PIL import Image
 import io
@@ -32,7 +32,7 @@ def root():
 def load_model():
     global model
 
-    MODEL_PATH = "backend/ML_models/new-with-min-200"
+    MODEL_PATH = "backend/ML_models/face_verification_model_finetuned.pth"
     NUM_CLASSES = 517  # From training file 
     
     try:
@@ -75,7 +75,7 @@ async def register_user(hd_image: UploadFile = File(...)):
 
 # API to verify the user
 @app.post('/check-verification')
-async def check_verification(user_image_embedding: dict, webcam_image: UploadFile = File(...)):
+async def check_verification(user_image_embedding: str = Form(...), webcam_image: UploadFile = File(...)):
     # Check if the model is loaded
     global model
 

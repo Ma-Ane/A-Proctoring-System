@@ -63,7 +63,7 @@ const LoginPage = () => {
             });
 
             if (!res.ok) return console.log("Error uploading image");
-            // console.log("Image uploaded successfully");
+            console.log("Image uploaded successfully");
 
             // Store user info
             const userRes = await fetch("http://localhost:3000/api/auth/register", {
@@ -300,7 +300,7 @@ const LoginPage = () => {
                                 placeholder=''
                             />
                         </div>    
-                                             
+
                         <div className='flex flex-col gap-1'>
                             <label className='text-xl'>Password</label>
                             <input

@@ -60,9 +60,12 @@ const TakeExam = () => {
         
         // Fetch user's stored embedding
         try {
-            const res = await fetch(`http://localhost:3000/api/auth/get_embedding/${encodeURIComponent(id)}`);
+            const res = await fetch(`http://localhost:3000/api/auth/get_embedding/shr.mandip@gmail.com`);
             const data = await res.json();
-            formData.append('user_image_embedding', JSON.stringify(data.embedding));
+            formData.append(
+            'user_image_embedding',
+            JSON.stringify({ embedding: data })
+            );
         } catch (error) {
             console.log("Error fetching embedding:", error);
             alert("Failed to fetch user data for verification.");

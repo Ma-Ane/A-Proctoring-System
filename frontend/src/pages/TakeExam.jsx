@@ -57,14 +57,16 @@ const TakeExam = () => {
         if (!capturedImage) return;
 
         const formData = new FormData();
+
+        const email = "mandip.bct78044@kecktm.edu.np";
         
         // Fetch user's stored embedding
         try {
-            const res = await fetch(`http://localhost:3000/api/auth/get_embedding/shr.mandip@gmail.com`);
+            const res = await fetch(`http://localhost:3000/api/auth/get_embedding/${email}`);
             const data = await res.json();
             formData.append(
             'user_image_embedding',
-            JSON.stringify({ embedding: data })
+            JSON.stringify(data )
             );
         } catch (error) {
             console.log("Error fetching embedding:", error);
@@ -159,7 +161,7 @@ const TakeExam = () => {
                                         className='size-36 object-cover rounded-full mt-3'
                                     />
                                     
-                                    <li className='text-2xl font-bold mb-4'>Ali Baba</li>
+                                    <li className='text-2xl font-bold mb-4'>Mandip Shrestha</li>
 
                                     {/* naam match hunxa ki hudainaa check garnuu parxa  */}
                                     <ul className="flex flex-col gap-4 text-xl">
@@ -170,7 +172,7 @@ const TakeExam = () => {
 
                                         <li className="grid grid-cols-2">
                                             <label className="font-bold">Email:</label>
-                                            <span>test1@gmail.com</span>
+                                            <span>mandip.bct78044@kecktm.edu.np</span>
                                         </li>
 
                                         <li className="grid grid-cols-2">

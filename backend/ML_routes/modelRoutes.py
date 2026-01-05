@@ -5,6 +5,8 @@ import io
 import base64
 from pydantic import BaseModel
 from io import BytesIO
+import json
+import numpy as np
 
 
 # Custom file 
@@ -68,7 +70,9 @@ async def register_user(hd_image: UploadFile = File(...)):
         print(f"Registered user with embedding: {embedding}")
 
         # Return a success message
-        return {"message": "User registered successfully!"}
+        return {"message": "User registered successfully!",
+                "embedding": embedding.tolist() if hasattr(embedding, "tolist") else embedding
+        }
 
     except Exception as e:
         return {"error": str(e)}
@@ -84,6 +88,8 @@ async def check_verification(user_image_embedding: str = Form(...), webcam_image
         raise HTTPException(status_code=500, detail="Model not loaded yet")
 
     try:
+        user_embedding = np.array(json.loads(user_image_embedding), dtype=float)
+
         # read bytes
         webcam_image_bytes = await webcam_image.read()
 
@@ -97,8 +103,8 @@ async def check_verification(user_image_embedding: str = Form(...), webcam_image
         if emb1 is None:
             return {"error": "Face not detected."}
 
-        if emb1 is not None and user_image_embedding is not None:
-            similarity = cosine_similarity(emb1, user_image_embedding)
+        if emb1 is not None and user_embedding is not None:
+            similarity = cosine_similarity(emb1, user_embedding)
             print(f"\n🧩 Cosine Similarity: {similarity:.4f}")
             threshold = 0.146     # from LFW dataset
 

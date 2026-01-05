@@ -44,8 +44,6 @@ router.post('/register', async (req, res) => {
         const imageBuffer = fs.readFileSync(imagePath);
 
         // Sending image to FastAPI to get face embedding
-        // no form-data import
-
 
         const formData = new FormData();
         const blob = new Blob([imageBuffer]);
@@ -106,7 +104,6 @@ router.get('/get_embedding/:email', async (req, res) => {
         res.status(500).json({error: error.message});
     }
 });
-
 
 // check the login info to grant access
 router.post('/verify_credentials', async(req, res) => {

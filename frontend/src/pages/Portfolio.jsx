@@ -9,7 +9,7 @@ const Portfolio = () => {
 
     // for chosing between attendance and personal details 
     const [isAttendance, setIsAttendance] = useState(true);
-    const [userName, setuserName] = useState(null);
+    const [userName, setuserName] = useState('');
     const [userData, setuserData] = useState(null);
 
     // for attendance exam

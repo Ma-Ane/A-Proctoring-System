@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react'
 
 const Result = () => {
 
+        const [userName, setuserName] = useState('');
+
     // for test, we are using id 
     const id = "68e77f98280f76d210c8bc14";
 
@@ -41,6 +43,7 @@ const Result = () => {
             }
         };
 
+        setuserName(localStorage.getItem('name'));
         fetchExamHistory();
     }, []);
 
@@ -54,7 +57,7 @@ const Result = () => {
                 className='size-28 rounded-full'
             />
             
-            <h1 className='text-lg sm:text-xl md:text-2xl font-bold'>Hari Bansa Acharya</h1>
+            <h1 className='text-lg sm:text-xl md:text-2xl font-bold'>{userName}</h1>
 
         </section>
 

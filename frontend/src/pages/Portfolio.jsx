@@ -37,7 +37,7 @@ const Portfolio = () => {
                 setuserData(data);
                 // console.log(data);
             } catch (error) {
-                console.log("Error fetching exams", error);
+                console.log("Error fetching user data", error);
             }
         };
         const fetchExamInBatch = async () => {

@@ -8,6 +8,8 @@ const TakeExam = () => {
     // get the data from the parene about the exam title 
     const { title } = useParams();
 
+    const [userData, setuserData] = useState(null);
+
     // to track the page 
     const [page, setPage] = useState(1);
 
@@ -27,15 +29,41 @@ const TakeExam = () => {
     const [micVerified, setMicVerified] = useState(false);
     const [isMicAvailable, setIsMicAvailable] = useState(true);
 
-
     // to set all the variables to default when mounting the component
     useEffect(() => {
         if (page === 2) {
-            // reset verification-related state
+            const fetchUserData = async () => {
+                try {
+                    let email = localStorage.getItem('email');
+    
+                    if (!email) {
+                        console.error("Email not found in localStorage");
+                        return;
+                    }
+    
+                    const response = await fetch(`http://localhost:3000/api/auth/get_user/${email}`);
+    
+                    if (!response.ok) {
+                        throw new Error("Failed to fetch user");
+                    }
+    
+                    const data = await response.json();
+    
+                    setuserData(data);
+                    setUserProfileImage(
+                        `http://localhost:3000/uploads/${data.image}`
+                    );                     // console.log(data);
+                } catch (error) {
+                    console.log("Error fetching user data", error);
+                }
+            };
+        
+            fetchUserData();
+            
+                       // reset verification-related state
             setCapturedImage("");
             setfaceVerified(false);
             setIsUserVerify(false);
-            setUserProfileImage('');
         }
         
         if (page === 3) {
@@ -58,7 +86,7 @@ const TakeExam = () => {
 
         const formData = new FormData();
 
-        const email = "mandip.bct78044@kecktm.edu.np";
+        const email = localStorage.getItem("email");
         
         // Fetch user's stored embedding
         try {
@@ -161,23 +189,23 @@ const TakeExam = () => {
                                         className='size-36 object-cover rounded-full mt-3'
                                     />
                                     
-                                    <li className='text-2xl font-bold mb-4'>Mandip Shrestha</li>
+                                    <li className='text-2xl font-bold mb-4'>{userData.name}</li>
 
                                     {/* naam match hunxa ki hudainaa check garnuu parxa  */}
                                     <ul className="flex flex-col gap-4 text-xl">
                                         <li className="grid grid-cols-2">
                                             <label className="font-bold">Batch:</label>
-                                            <span>BCT</span>
+                                            <span>{userData.batch}</span>
                                         </li>
 
                                         <li className="grid grid-cols-2">
                                             <label className="font-bold">Email:</label>
-                                            <span>mandip.bct78044@kecktm.edu.np</span>
+                                            <span>{userData.email}</span>
                                         </li>
 
                                         <li className="grid grid-cols-2">
                                             <label className="font-bold">Role:</label>
-                                            <span>Student</span>
+                                            <span>{userData.role}</span>
                                         </li>
                                     </ul>
                                 </div>

@@ -66,12 +66,26 @@ router.post('/register', async (req, res) => {
         await newUser.save();
 
         // return success message
-        res.status(201).json({message: "User created successfully."});
+        res.status(201).json({message: "User created successfully.", data: newUser.email});
     } catch (error) {
         res.status(500).json({error: error.message});
     }
 });
 
+router.get('/get_user/:email', async (req, res) => {
+    try {
+        const { email } = req.params;
+
+        // to find only one user, use findOne
+        const foundUser = await User.findOne({ email });
+        if (!foundUser) throw new Error ("User not found");
+
+        // only send the exam details to the frontend
+        res.status(200).json(foundUser);
+    } catch (error) {
+        res.status(500).json({error: error.message});
+    }
+});
 
 // get the exams of particular user from db
 router.get('/get_exam/:id', async (req, res) => {

@@ -120,6 +120,8 @@ const LoginPage = () => {
             if (data.error)
                 alert(data.error);
             else {
+                localStorage.setItem("email",logInUser.email);
+                localStorage.setItem("name",data.data);
                 alert("User found. Press OK to go to home screen.")
                 navigate('/');
             }

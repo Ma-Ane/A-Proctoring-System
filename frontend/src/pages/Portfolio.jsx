@@ -6,22 +6,40 @@ const Portfolio = () => {
     const batch = "BCT";
 
     // paxii user lai fetch garnuu parxaa
-    const user = {
-        name: "Hari Bansa Acharya",
-        batch: "BCT",
-        gender: "Male",
-        age: 22,
-        role: "Student",
-        email: "hari_ji@gmail.com"
-    };
 
     // for chosing between attendance and personal details 
     const [isAttendance, setIsAttendance] = useState(true);
+    const [userName, setuserName] = useState(null);
+    const [userData, setuserData] = useState(null);
+
     // for attendance exam
     const [examInBatch, setExamInBatch] = useState([]);
 
     // render the available exams for the user in his/her batch
     useEffect(() => {
+        const fetchUserData = async () => {
+            try {
+                let email = localStorage.getItem('email');
+
+                if (!email) {
+                    console.error("Email not found in localStorage");
+                    return;
+                }
+
+                const response = await fetch(`http://localhost:3000/api/auth/get_user/${email}`);
+
+                if (!response.ok) {
+                    throw new Error("Failed to fetch user");
+                }
+
+                const data = await response.json();
+
+                setuserData(data);
+                // console.log(data);
+            } catch (error) {
+                console.log("Error fetching exams", error);
+            }
+        };
         const fetchExamInBatch = async () => {
             try {
                 const response = await fetch(`http://localhost:3000/api/exam/${encodeURIComponent(batch)}`);
@@ -35,6 +53,9 @@ const Portfolio = () => {
             }
         };
 
+        setuserName(localStorage.getItem('name'));
+
+        fetchUserData();
         fetchExamInBatch();
     }, []);
 
@@ -49,7 +70,7 @@ const Portfolio = () => {
                 alt="" 
                 className='size-28 rounded-full'
             />
-            <h1 className='text-2xl font-bold'>Hari Bansa Acharya</h1>
+            <h1 className='text-2xl font-bold'>{userName}</h1>
         </section>
 
         {/* // for attentance and personal details button  */}
@@ -101,22 +122,22 @@ const Portfolio = () => {
                 <section className='flex flex-col gap-5'>
                     <div className='flex flex-row gap-2 items-center'>
                         <label className='text-black text-lg font-bold'>Name: </label>
-                        <span className='text-lg'>{user.name}</span>
+                        <span className='text-lg'>{userData.name}</span>
                     </div>
                     
                     <div className='flex flex-row gap-2 items-center'>
                         <label className='text-black text-lg font-bold'>Batch: </label>
-                        <span className='text-lg'>{user.batch}</span>
+                        <span className='text-lg'>{userData.batch}</span>
                     </div>
 
                     <div className='flex flex-row gap-2 items-center'>
                         <label className='text-black text-lg font-bold'>Gender: </label>
-                        <span className='text-lg'>{user.gender}</span>
+                        <span className='text-lg'>{userData.gender}</span>
                     </div>
 
                     <div className='flex flex-row gap-2 items-center'>
                         <label className='text-black text-lg font-bold'>Age: </label>
-                        <span className='text-lg'>{user.age}</span>
+                        <span className='text-lg'>{userData.age}</span>
                     </div>
 
                 </section>
@@ -125,12 +146,12 @@ const Portfolio = () => {
                 <section className='flex flex-col gap-5'>
                     <div className='flex flex-row gap-2 items-center'>
                         <label className='text-black text-lg font-bold'>Role: </label>
-                        <span className='text-lg'>{user.role}</span>
+                        <span className='text-lg'>{userData.role}</span>
                     </div>
 
                     <div className='flex flex-row gap-2 items-center'>
                         <label className='text-black text-lg font-bold'>Email: </label>
-                        <span className='text-lg'>{user.email}</span>
+                        <span className='text-lg'>{userData.email}</span>
                     </div>
                 </section>
             </div>

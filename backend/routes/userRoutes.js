@@ -62,6 +62,10 @@ router.post('/register', async (req, res) => {
         const data = await response.json();
         const embedding = data.embedding;
 
+        // if (embedding.length === 0) {
+        //     console.log('sdf')
+        //     return res.status(500).json({error: "Embeddings error"}) 
+        // }
         const newUser = await User({name, batch, age, gender, role, image, embedding, email, password: hashedPassword});
         await newUser.save();
 

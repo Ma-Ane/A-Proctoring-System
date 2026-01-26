@@ -8,6 +8,9 @@ const LoginPage = () => {
     // for checking if login or sign up y user
     const [isLogIn, setIsLogIn] = useState(true);
 
+    // for checking if the user uploaded the image or not
+    const [imageUploaded, setImageUploaded] = useState(false)
+
     // for input user photo
     const [fileName, setFileName] = useState("No file chosen");
     const [fileData, setFileData] = useState(null);
@@ -102,6 +105,8 @@ const LoginPage = () => {
             };
             reader.readAsDataURL(file);
         }
+
+        setImageUploaded(true);
     };  
 
     // to handle the login option for the user
@@ -125,7 +130,7 @@ const LoginPage = () => {
                 localStorage.setItem("email", logInUser.email);
                 localStorage.setItem("name", data.name);
                 localStorage.setItem("image", data.image)
-                alert("User found. Press OK to go to home screen.")
+                // alert("User found. Press OK to go to home screen.")
                 navigate('/');
             }
 
@@ -137,7 +142,7 @@ const LoginPage = () => {
   return (
     <div className='flex items-center relative justify-center'>
         <img 
-            src="login-background.jpg" 
+            src="login-background.png" 
             alt="Background Image" 
             className='w-screen h-screen object-cover'
         />
@@ -202,7 +207,7 @@ const LoginPage = () => {
             {
                 /* a div for signupp  */
                 !isLogIn && (
-                    <div className='flex flex-col gap-3 w-full mt-4'>
+                    <div className='flex flex-col gap-3 w-full mt-1'>
                         <div className='flex flex-col gap-1'>
                             <label className='text-xl'>Name</label>
                             <input
@@ -280,8 +285,9 @@ const LoginPage = () => {
                         </div>
 
                         {/* image of the user  */}
-                        <div className='flex flex-col gap-1 text-white text-xl my-3'>
-                            <label htmlFor='imageInput' className='hover:cursor-pointer'>Select profile image</label>
+                        <div className='flex justify-between gap-1 text-white text-xl my-3'>
+                            <label htmlFor='imageInput' className='hover:cursor-pointer'>{imageUploaded ? "Change picture" : "Select profile image"}</label>
+                            {/* <span>{"imageUploaded" ? "✅" : "❌"}</span> */}
 
                             {/* hidden file input  */}
                             <input 
@@ -319,12 +325,14 @@ const LoginPage = () => {
                         </div>                         
 
                         {/* sign up button  */}
-                        <button 
-                            className='button mt-2'
-                            onClick={saveUserToDB}
-                        >
-                            Sign Up
-                        </button>
+                        <div className='w-full justify-center items-center flex'>
+                            <button 
+                                className='button !py-2 !px-4 mt-4 !bg-[#bfa6a1] !text-black !rounded-xl'
+                                onClick={saveUserToDB}
+                            >
+                                Sign Up
+                            </button>
+                        </div>
 
                         <p className="flex justify-end gap-3 text-white">
                             Already have an account? 

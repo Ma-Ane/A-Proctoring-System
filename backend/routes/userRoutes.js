@@ -131,7 +131,7 @@ router.post('/verify_credentials', async(req, res) => {
         // verify the password of the user
         const isMatch = await verifyPassword(password, foundUser.password);
         if (isMatch)
-            res.status(200).json({message: "User found",data: foundUser.name});
+            res.status(200).json({message: "User found", name: foundUser.name, image: foundUser.image});
         else
             res.status(401).json({error: "Incorrect Password"});
 

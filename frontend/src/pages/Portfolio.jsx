@@ -10,6 +10,7 @@ const Portfolio = () => {
     // for chosing between attendance and personal details 
     const [isAttendance, setIsAttendance] = useState(true);
     const [userName, setuserName] = useState('');
+    const [userImagePath, setImagePath] = useState('');
     const [userData, setuserData] = useState(null);
 
     // for attendance exam
@@ -54,6 +55,7 @@ const Portfolio = () => {
         };
 
         setuserName(localStorage.getItem('name'));
+        setImagePath(localStorage.getItem('image'));
 
         fetchUserData();
         fetchExamInBatch();
@@ -66,7 +68,7 @@ const Portfolio = () => {
         {/* section for student image and name  */}
         <section className='flex flex-col gap-3 items-center'>
             <img 
-                src="logo.webp" 
+                src={`http://localhost:3000/uploads/${userImagePath}`}
                 alt="" 
                 className='size-28 rounded-full'
             />

@@ -5,7 +5,7 @@ const Result = () => {
         const [userName, setuserName] = useState('');
 
     // for test, we are using id 
-    const id = "68e77f98280f76d210c8bc14";
+    const id = "69772d8cc54755e60c906840";
 
     // a sample of the exam results to be printed
     const [examResults, setExamResults] = useState([

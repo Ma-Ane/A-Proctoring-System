@@ -116,12 +116,15 @@ const LoginPage = () => {
             });
 
             const data = await res.json();
+
+            console.log("A", data)
             
             if (data.error)
                 alert(data.error);
             else {
-                localStorage.setItem("email",logInUser.email);
-                localStorage.setItem("name",data.data);
+                localStorage.setItem("email", logInUser.email);
+                localStorage.setItem("name", data.name);
+                localStorage.setItem("image", data.image)
                 alert("User found. Press OK to go to home screen.")
                 navigate('/');
             }

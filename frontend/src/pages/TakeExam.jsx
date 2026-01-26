@@ -16,6 +16,9 @@ const TakeExam = () => {
     // to see if the verify user button is clicked
     const [isUserVerify, setIsUserVerify] = useState(false);
 
+    // wait until the backend verifies the user.
+    const [isVerifying, setIsVerifying] = useState(false);
+
     // captured image
     const [capturedImage, setCapturedImage] = useState("");
 
@@ -84,6 +87,8 @@ const TakeExam = () => {
     const handleVerifyUser = async () => {
         if (!capturedImage) return;
 
+        setIsVerifying(true);
+
         const formData = new FormData();
 
         const email = localStorage.getItem("email");
@@ -93,8 +98,8 @@ const TakeExam = () => {
             const res = await fetch(`http://localhost:3000/api/auth/get_embedding/${email}`);
             const data = await res.json();
             formData.append(
-            'user_image_embedding',
-            JSON.stringify(data )
+                'user_image_embedding',
+                JSON.stringify(data )
             );
         } catch (error) {
             console.log("Error fetching embedding:", error);
@@ -119,14 +124,26 @@ const TakeExam = () => {
             const data = await response.json();
 
             // if the user face is not detected
-            if (data.error) alert(data.error)
+            if (data.error) {
+                alert(data.error)
+                return;
+            }
                 
             // set the output from the backend to the variable
-            if (data.message == "Same person") setfaceVerified(true);
-            else setfaceVerified(false);
+            if (data.message == "Same person") {
+                setfaceVerified(true);
+            } else {
+                setfaceVerified(false);
+                alert("Please try again.")
+            };
+
         } catch (error) {
             console.log("Error from verificaiton model", error);
+        } finally {
+            // remove the loading button 
+            setIsVerifying(false);
         }
+        
     }
 
 
@@ -170,12 +187,20 @@ const TakeExam = () => {
                                 onCapture={(img) => setCapturedImage(img)}
                             />
 
+                            {isVerifying && (
+                                <p className="text-lg text-gray-300 animate-pulse">
+                                    Verifying your identity, please wait...
+                                </p>
+                            )}
+
                             <button 
                                 className='exam-button' 
+                                disabled={isVerifying}
                                 onClick={() => {
                                     setIsUserVerify((prev) => !prev);
                                 }}
-                            >Verify
+                            >
+                                {isVerifying ? "Verifying..." : "Verify"}
                             </button>               
                         </div>
 

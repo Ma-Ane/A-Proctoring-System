@@ -92,12 +92,12 @@ router.get('/get_user/:email', async (req, res) => {
 });
 
 // get the exams of particular user from db
-router.get('/get_exam/:id', async (req, res) => {
+router.get('/get_exam/:email', async (req, res) => {
     try {
-        const { id } = req.params;
+        const { email } = req.params;
 
         // to find only one user, use findOne
-        const foundUser = await User.findOne({_id: id});
+        const foundUser = await User.findOne({email: email});
         if (!foundUser) throw new Error ("User not found");
 
         // only send the exam details to the frontend

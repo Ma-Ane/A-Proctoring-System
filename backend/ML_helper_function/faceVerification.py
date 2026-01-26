@@ -156,7 +156,7 @@ def detect_crop_and_normalize(img, margin=0.3):
 
     boxes, probs = mtcnn.detect(img)
     if boxes is None or len(boxes)==0:
-        print(f"❌ No face detected: {img}")
+        print(f"No face detected: {img}")
         return None
 
     box = boxes[0]

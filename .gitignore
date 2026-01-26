@@ -6,3 +6,4 @@
 # Ignore ML model files
 backend/ML_models/
 backend/ML_routes/venv312
+backend/.env

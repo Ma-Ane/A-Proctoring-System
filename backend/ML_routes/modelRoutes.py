@@ -16,7 +16,7 @@ app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # You can restrict later
+    allow_origins=["*"],  
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -67,7 +67,7 @@ async def register_user(hd_image: UploadFile = File(...)):
 
         # Here you would save the embedding to a database (for example)
         # For simplicity, we just print it
-        print(f"Registered user with embedding: {embedding}")
+        print(f"Registered user with embedding: {len(embedding)}")
 
         # Return a success message
         return {"message": "User registered successfully!",
@@ -105,7 +105,7 @@ async def check_verification(user_image_embedding: str = Form(...), webcam_image
 
         if emb1 is not None and user_embedding is not None:
             similarity = cosine_similarity(emb1, user_embedding)
-            print(f"\n🧩 Cosine Similarity: {similarity:.4f}")
+            print(f"\nCosine Similarity: {similarity:.4f}")
             threshold = 0.146     # from LFW dataset
 
             if similarity >= threshold:

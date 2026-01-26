@@ -1,11 +1,10 @@
 import React, { useEffect, useState } from 'react'
 
 const Result = () => {
+    const [userName, setuserName] = useState('');
 
-        const [userName, setuserName] = useState('');
-
-    // for test, we are using id 
-    const id = "69772d8cc54755e60c906840";
+    // taking the email of the logged in user
+    const email = localStorage.getItem("email");
 
     // a sample of the exam results to be printed
     const [examResults, setExamResults] = useState([
@@ -33,7 +32,7 @@ const Result = () => {
     useEffect(() => {
         const fetchExamHistory= async () => {
             try {
-                const response = await fetch(`http://localhost:3000/api/auth/get_exam/${encodeURIComponent(id)}`);
+                const response = await fetch(`http://localhost:3000/api/auth/get_exam/${encodeURIComponent(email)}`);
                 
                 const data = await response.json();
                 setExamResults(data);

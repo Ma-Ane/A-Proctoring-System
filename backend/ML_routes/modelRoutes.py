@@ -7,10 +7,11 @@ from pydantic import BaseModel
 from io import BytesIO
 import json
 import numpy as np
+import time
 
 # Custom file 
 from backend.ML_helper_function.faceVerification import load_face_verification_model, get_embedding, cosine_similarity
-from backend.ML_helper_function.multipleFaceDetection import load_yolo_model
+from backend.ML_helper_function.multipleFaceDetection import load_yolo_model, detect_faces
 
 app = FastAPI()
 

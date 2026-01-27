@@ -145,6 +145,11 @@ async def proctor_ws(websocket: WebSocket):
     try:
         while True:
             data = await websocket.receive_text()
+            
+            # Ignore empty frames
+            if not data or len(data) < 100:
+                continue
+            
             img_bytes = base64.b64decode(data)
             img = Image.open(io.BytesIO(img_bytes)).convert("RGB")
 

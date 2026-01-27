@@ -55,11 +55,17 @@ router.post('/register', async (req, res) => {
             body: formData
         });
 
+        console.log("A")
+
         if (!response.ok) {
-            throw new Error('FastAPI request failed');
+            const errorData = await response.json();
+            return res.status(response.status).json({
+                error: errorData.detail
+            });
         }
 
         const data = await response.json();
+        console.log("Data: ", data)
         const embedding = data.embedding;
 
         // if (embedding.length === 0) {

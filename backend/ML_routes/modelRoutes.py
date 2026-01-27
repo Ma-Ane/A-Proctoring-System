@@ -54,37 +54,33 @@ def startup():
 
 @app.post('/register-user')
 async def register_user(hd_image: UploadFile = File(...)):
-    # Check if the model is loaded
     global model
-    
+
     if model is None:
         raise HTTPException(status_code=500, detail="Model not loaded yet")
-    
+
     try:
-        # Read the uploaded image bytes
         hd_image_bytes = await hd_image.read()
-        
-        # Convert the image to a PIL Image object
         hd_img = Image.open(io.BytesIO(hd_image_bytes)).convert('RGB')
-        
-        # Get embeddings from the model
+
         embedding = get_embedding(model, hd_img)
-        
-        # Check if the embedding is successfully returned
+
         if embedding is None:
-            return {"error": "Face not detected."}
+            raise HTTPException(
+                status_code=400,
+                detail="Face not detected or multiple faces detected."
+            )
 
-        # Here you would save the embedding to a database (for example)
-        # For simplicity, we just print it
-        print(f"Registered user with embedding: {len(embedding)}")
-
-        # Return a success message
-        return {"message": "User registered successfully!",
-                "embedding": embedding.tolist() if hasattr(embedding, "tolist") else embedding
+        return {
+            "message": "User registered successfully!",
+            "embedding": embedding.tolist() if hasattr(embedding, "tolist") else embedding
         }
 
+    except HTTPException:
+        # 🔴 THIS IS IMPORTANT
+        raise
     except Exception as e:
-        return {"error": str(e)}
+        raise HTTPException(status_code=500, detail=str(e))
 
 # API to verify the user
 @app.post('/check-verification')

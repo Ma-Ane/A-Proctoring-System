@@ -147,23 +147,57 @@ def crop_with_margin(img, box, margin=0.3):
     y2_new = min(img.height, y2 + margin*h)
     return img.crop((x1_new, y1_new, x2_new, y2_new))
 
-def detect_crop_and_normalize(img, margin=0.3):
-    # try:
-    #     img = Image.open(image_path).convert("RGB")
-    # except:
-    #     print(f"❌ Cannot open {image_path}")
-    #     return None
 
+def detect_crop_and_normalize(img, margin=0.3, prob_threshold=0.98):
     boxes, probs = mtcnn.detect(img)
-    if boxes is None or len(boxes)==0:
-        print(f"No face detected: {img}")
+
+    if boxes is None or probs is None or len(boxes) == 0:
+        print("❌ No face detected")
         return None
 
-    box = boxes[0]
+    probs = np.array(probs)
+    boxes = np.array(boxes)
+
+    # Sort faces by confidence (descending)
+    sorted_idx = np.argsort(probs)[::-1]
+    probs = probs[sorted_idx]
+    boxes = boxes[sorted_idx]
+
+    # Case 1: Only one face
+    if len(probs) == 1:
+        if probs[0] < prob_threshold:
+            print(f"❌ Low confidence face: {probs[0]:.3f}")
+            return None
+
+        box = boxes[0]
+
+    # Case 2: Multiple faces
+    else:
+        top1 = probs[0]
+        top2 = probs[1]
+
+        # True multiple faces
+        if top1 >= prob_threshold and top2 >= prob_threshold:
+            print(
+                f"❌ Multiple faces detected "
+                f"(p1={top1:.3f}, p2={top2:.3f})"
+            )
+            return None
+
+        # Only one confident face → accept best one
+        if top1 >= prob_threshold:
+            box = boxes[0]
+        else:
+            print(f"❌ No confident face (top={top1:.3f})")
+            return None
+
+    # Crop, resize, normalize
     face = crop_with_margin(img, box, margin=margin)
-    face = face.resize((112,112))
+    face = face.resize((112, 112))
     tensor_face = preprocess_transform(face)
+
     return tensor_face
+
 
 
 ## just to display the image

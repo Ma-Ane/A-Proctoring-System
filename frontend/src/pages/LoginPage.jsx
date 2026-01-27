@@ -75,15 +75,19 @@ const LoginPage = () => {
                 body: JSON.stringify(payload)
             });
 
+            // console.log("DIT")
+
             if (userRes.ok) {
+                console.log("OK")
                 const data = await userRes.json();
                 alert(`User with ${data.name} created successfully. Please log in.`);
                 setIsLogIn(true);   
                 // console.log("User created:", data);
             } else {
                 const err = await userRes.json();
-                console.log("Error creating user:", err);
+                alert(err.error);   // 🔴 show exact FastAPI message
             }
+
         } catch (error) {
             console.log("Error creating user", error);
         }

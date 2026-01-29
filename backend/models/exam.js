@@ -12,7 +12,7 @@ const examSchema = new mongoose.Schema({
     time: String,
     date: Date,
     isActive: {type: Boolean, default: true},
-    batch: String
+    batch: String,
 });
 
 

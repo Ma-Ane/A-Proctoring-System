@@ -37,6 +37,11 @@ app.use(express.json());
   const imageRoutes = require('./routes/gerUserImageRoutes');
   app.use('/getUserImage', imageRoutes);
 
+  // questions route
+  const questionRoutes = require('./routes/questionRoutes')
+  app.use('/question', questionRoutes);
+
+
 // Test route
 app.get("/", (req, res) => {
   res.send("Backend is running 🚀");

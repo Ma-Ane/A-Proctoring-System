@@ -44,7 +44,7 @@ const UpcomingExams = () => {
                     <span className='flex-[1]'>{index+1}</span>
 
                     <span className='flex-[4]'>
-                      <Link to={`take-exam/${exam.title}`}>
+                      <Link to={`take-exam/${exam._id}`}>
                         <p 
                           className='hover:cursor-pointer w-fit'
                         >

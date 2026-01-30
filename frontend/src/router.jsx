@@ -28,11 +28,11 @@ const router = createBrowserRouter([
     },
 
     {
-        path: "/take-exam/:title",
+        path: "/take-exam/:examId",
         element: <TakeExam/>
     },
     {
-        path: '/start-exam/:title',
+        path: '/start-exam/:examId',
         element: <StartExam />
     }
 ]);

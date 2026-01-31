@@ -41,6 +41,10 @@ app.use(express.json());
   const questionRoutes = require('./routes/questionRoutes')
   app.use('/question', questionRoutes);
 
+  // results route
+  const resultRoutes = require('./routes/resultRoutes');
+  app.use('/result', resultRoutes);
+
 
 // Test route
 app.get("/", (req, res) => {

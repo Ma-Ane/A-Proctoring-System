@@ -15,7 +15,8 @@ const resultSchema = new mongoose.Schema({
         required: true,        
     },
     answers: [AnswerSchema],
-    submittedAt: {type: Date, default: Date.now}
+    submittedAt: {type: Date, default: Date.now},
+    score: {type: Number, default: 0},
 });
 
 

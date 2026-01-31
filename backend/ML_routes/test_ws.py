@@ -3,8 +3,12 @@ import base64
 import cv2
 import json
 import time
+from dotenv import load_dotenv
+import os
 
-WS_URL = "ws://127.0.0.1:8000/ws/proctor"
+load_dotenv()
+
+WS_URL = os.getenv("WS_URL")
 
 ws = websocket.WebSocket()
 ws.connect(WS_URL)

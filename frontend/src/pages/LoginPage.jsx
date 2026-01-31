@@ -126,7 +126,7 @@ const LoginPage = () => {
 
             const data = await res.json();
 
-            console.log("A", data)
+            // console.log("A", data)
             
             if (data.error)
                 alert(data.error);
@@ -134,6 +134,7 @@ const LoginPage = () => {
                 localStorage.setItem("email", logInUser.email);
                 localStorage.setItem("name", data.name);
                 localStorage.setItem("image", data.image)
+                localStorage.setItem("userId", data.id)
                 // alert("User found. Press OK to go to home screen.")
                 navigate('/');
             }

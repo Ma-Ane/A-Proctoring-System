@@ -98,7 +98,7 @@ const Portfolio = () => {
             isAttendance === true ? 
             // attendance section 
                 (
-                    <ul className='flex flex-col w-full text-lg gap-3'>
+                    <ul className='flex flex-col w-full text-base md:text-lg lg:text-xl gap-3'>
                         <li className='flex text-xl font-bold mb-3'>
                             <span className='flex-[1]'>S.N</span>
                             <span className='flex-[5]'>Title</span>
@@ -123,22 +123,22 @@ const Portfolio = () => {
                 {/* for left side part  */}
                 <section className='flex flex-col gap-5'>
                     <div className='flex flex-row gap-2 items-center'>
-                        <label className='text-black text-lg font-bold'>Name: </label>
+                        <label className='text-black text-base md:text-lg lg:text-xl font-bold'>Name: </label>
                         <span className='text-lg'>{userData.name}</span>
                     </div>
                     
                     <div className='flex flex-row gap-2 items-center'>
-                        <label className='text-black text-lg font-bold'>Batch: </label>
+                        <label className='text-black text-base md:text-lg lg:text-xl  font-bold'>Batch: </label>
                         <span className='text-lg'>{userData.batch}</span>
                     </div>
 
                     <div className='flex flex-row gap-2 items-center'>
-                        <label className='text-black text-lg font-bold'>Gender: </label>
+                        <label className='text-black text-base md:text-lg lg:text-xl  font-bold'>Gender: </label>
                         <span className='text-lg'>{userData.gender}</span>
                     </div>
 
                     <div className='flex flex-row gap-2 items-center'>
-                        <label className='text-black text-lg font-bold'>Age: </label>
+                        <label className='text-black text-base md:text-lg lg:text-xl  font-bold'>Age: </label>
                         <span className='text-lg'>{userData.age}</span>
                     </div>
 
@@ -147,12 +147,12 @@ const Portfolio = () => {
                 {/* for right side part  */}
                 <section className='flex flex-col gap-5'>
                     <div className='flex flex-row gap-2 items-center'>
-                        <label className='text-black text-lg font-bold'>Role: </label>
+                        <label className='text-black text-base md:text-lg lg:text-xl  font-bold'>Role: </label>
                         <span className='text-lg'>{userData.role}</span>
                     </div>
 
                     <div className='flex flex-row gap-2 items-center'>
-                        <label className='text-black text-lg font-bold'>Email: </label>
+                        <label className='text-black text-base md:text-lg lg:text-xl  font-bold'>Email: </label>
                         <span className='text-lg'>{userData.email}</span>
                     </div>
                 </section>

@@ -8,7 +8,7 @@ export default function StartExam() {
     // get the exam id from the link or URL
     const { examId } = useParams();
     const location = useLocation();
-    const query = new URLSearchParams();
+    const query = new URLSearchParams(location.search);
     const title = query.get("title");
 
     // get the userId from localStorage

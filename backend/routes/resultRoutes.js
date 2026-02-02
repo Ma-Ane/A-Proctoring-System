@@ -35,48 +35,60 @@ router.post('/save_results', async (req, res) => {
 const getCorrectAnswers = async (examId, answers) => {
     try {
         let score = 0;
-        const question = await Question.findOne({ examId: examId});
+        const questionDoc = await Question.findOne({ examId: examId });
+        if (!questionDoc || !questionDoc.questions.length) return 0;
 
-        if (!question) return 0;
-        
-        // actual question and answer
-        const questions = question.questions;
+        const questions = questionDoc.questions;
 
-        for (let i=0; i<questions.length; i++) {
-            // check if the questions are the same
-            if (questions[i].title !== answers[i].title) console.log("Error for question: ", i+1);
+        for (let i = 0; i < questions.length; i++) {
+            if (!answers[i]) {
+                console.warn(`Missing answer for question ${i+1}`);
+                continue;
+            }
 
-            if (questions[i].correctAnswer === answers[i].answer) score ++;
+            if (questions[i].title !== answers[i].title)
+                console.warn("Question title mismatch at index", i);
+
+            if (questions[i].correctAnswer === answers[i].answer) score++;
         }
 
-        return score/questions.length;
+        return questions.length ? score / questions.length : 0;
     } catch (error) {
-        console.log(error);
+        console.error(error);
+        return 0; // fallback if error occurs
     }
 };
 
 // to calculate the scores of all result
 router.post('/calculate_score', async (req, res) => {
     try {
-        // get all the results object from db
-        const results = await Result.find();
+        const results = await Result.find({ score: -10 });
 
-        if (results.length === 0) {
-            return res.status(200).json({ message: "No results found." });
-        }
-        
-        for (const result of results) {
-            const score = await getCorrectAnswers(result.examId, result.answers);
-
-            // update the document with the score field
-            result.score = score;
-            await result.save();
+        if (!results.length) {
+            return res.status(200).json({ message: "No ungraded results found." });
         }
 
-        res.status(200).json({message: "Score added."});
+        await Promise.all(results.map(async (result) => {
+            try {
+                const score = await getCorrectAnswers(result.examId, result.answers);
+                const finalScore = (typeof score === "number" && !isNaN(score)) ? score : 0;
+
+                await Result.updateOne(
+                    { _id: result._id },
+                    { $set: { score: finalScore } }
+                );
+
+            } catch (err) {
+                console.error(`Error grading result ${result._id}:`, err.message);
+            }
+        }));
+
+        res.status(200).json({ message: "Scores calculated and updated." });
     } catch (error) {
-        res.status(500).json({error: error.message});
+        console.error(error);
+        res.status(500).json({ error: error.message });
     }
 });
+
 
 module.exports = router;

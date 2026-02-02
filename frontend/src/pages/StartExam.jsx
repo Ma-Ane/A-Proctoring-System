@@ -227,11 +227,13 @@ export default function StartExam() {
                 <div className={`relative h-full w-full flex-2 p-5 mt-10 transition-opacity duration-300 ${submitted ? "opacity-20 pointer-events-none" : ""}`}>
                     {currentQuestion &&
                         <>
-                            <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-5xl">
-                                {currentQuestion.title}
+                            {/* questionn  */}
+                            <h2 className="mt-4 text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold">
+                                {currentIndex+1}. {currentQuestion.title}
                             </h2>
 
-                            <ul className="mt-56">
+                            {/* optionsss  */}
+                            <ul className="mt-40">
                                 {currentQuestion.options.map((option, index) => {
                                     const isSelected = selectedOption === index;
                                     return (
@@ -239,11 +241,22 @@ export default function StartExam() {
                                             key={index}
                                             onClick={() => setSelectedOption(index)}
                                             className={`
-                                                mb-4 py-3 px-5 w-full text-2xl rounded-lg cursor-pointer
-                                                transition-all duration-300 ease-in-out
+                                                relative mb-4 py-4 px-6 w-full text-xl rounded-xl cursor-pointer
+                                                transition-all duration-300 ease-out
                                                 backdrop-blur-md bg-white/10
-                                                hover:bg-white/20 hover:shadow-lg hover:scale-[1.01]
-                                                ${isSelected ? "border-2 border-primary shadow-primary/50 shadow-lg bg-white/25" : "border border-transparent"}
+                                                border
+                                                flex items-center justify-between
+
+                                                hover:bg-white/20 hover:shadow-md
+                                                active:scale-[0.98]
+
+                                                focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary
+
+                                                ${
+                                                    isSelected
+                                                        ? "border-primary bg-white/30 shadow-xl shadow-primary/40 scale-[1.02]"
+                                                        : "border-white/10"
+                                                }
                                             `}
                                         >
                                             {option}
@@ -260,9 +273,29 @@ export default function StartExam() {
                             >
                                 {currentIndex === questions.length - 1 ? "Submit" : "Next"}
                             </button>
+
+                            {/* progress bar like for no of questions */}
+                            <div 
+                                className="absolute -bottom-24 w-full h-3 rounded-lg overflow-hidden flex transition-all duration-300 ease-in-out"
+                            >
+                                {
+                                    questions.map((_, index) => (
+                                        <div
+                                            key={index}
+                                            className={`
+                                                flex-1 transition-colors duration-400 
+                                                ${index < currentIndex ? "bg-green-600" : "bg-green-100"}
+                                            `}
+                                        />
+                                    ))
+                                }
+                            </div>
                         </>
                     }
                 </div>
+
+
+
 
                 {/* Video and status container */}
                 <div className={`mt-10 transition-opacity duration-300 ${submitted ? "opacity-20 pointer-events-none" : ""}`}>
@@ -292,7 +325,10 @@ export default function StartExam() {
                                 Answers have been submitted. Check results section for any updates.
                             </p>
                             <Link to="/">
-                                <span className="bg-blue-600 hover:cursor-pointer p-2 rounded-lg text-xl">
+                                <span 
+                                    className="bg-blue-600 hover:cursor-pointer p-2 rounded-lg text-xl"
+                                    onClick={exitFullScreen}
+                                >
                                     OK
                                 </span>
                             </Link>

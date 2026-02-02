@@ -7,7 +7,7 @@ const path = require('path');
 const fs = require('fs');
 
 const User = require('../models/user');
-
+const Result = require('../models/result');
 
 // a function to take plain text and hash 
 async function hashPassword (password) {
@@ -98,20 +98,20 @@ router.get('/get_user/:email', async (req, res) => {
 });
 
 // get the exams of particular user from db
-router.get('/get_exam/:email', async (req, res) => {
-    try {
-        const { email } = req.params;
+// router.get('/get_exam/:email', async (req, res) => {
+//     try {
+//         const { email } = req.params;
 
-        // to find only one user, use findOne
-        const foundUser = await User.findOne({email: email});
-        if (!foundUser) throw new Error ("User not found");
+//         // to find only one user, use findOne
+//         const foundUser = await User.findOne({email: email});
+//         if (!foundUser) throw new Error ("User not found");
 
-        // only send the exam details to the frontend
-        res.status(200).json(foundUser.exams);
-    } catch (error) {
-        res.status(500).json({error: error.message});
-    }
-});
+//         // only send the exam details to the frontend
+//         res.status(200).json(foundUser.exams);
+//     } catch (error) {
+//         res.status(500).json({error: error.message});
+//     }
+// });
 
 // get embedding of current user from db
 router.get('/get_embedding/:email', async (req, res) => {
@@ -147,6 +147,23 @@ router.post('/verify_credentials', async(req, res) => {
 
     } catch (error) {
         res.status(500).json({error: error.message});
+    }
+});
+
+// to get the results of the user from the db
+router.get("/get_result/:userId", async (req, res) => {
+    try {
+        const { userId } = req.params;
+
+        const foundUser = await User.findById(userId);
+        if (!foundUser) return res.status(404).json({message: "User not found."});
+
+        const foundResult = await Result.find({userId: userId});
+        if (!foundResult) return res.status(200).json({message: "User has no active result."});
+
+        return res.status(200).json(foundResult)
+    } catch (error) {
+        res.status(500).json({error: error.message})
     }
 });
 

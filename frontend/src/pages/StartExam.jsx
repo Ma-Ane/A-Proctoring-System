@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useLocation } from "react-router-dom";
 
 const WS_URL = "ws://127.0.0.1:8000/ws/proctor";
 
@@ -7,6 +7,9 @@ export default function StartExam() {
 
     // get the exam id from the link or URL
     const { examId } = useParams();
+    const location = useLocation();
+    const query = new URLSearchParams();
+    const title = query.get("title");
 
     // get the userId from localStorage
     const userId = localStorage.getItem("userId");
@@ -161,7 +164,8 @@ export default function StartExam() {
                 body: JSON.stringify({
                     examId,
                     userId,
-                    answers
+                    answers,
+                    title
                 })
             });
 

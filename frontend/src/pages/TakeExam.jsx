@@ -1,12 +1,15 @@
 import React, { useEffect, useState } from 'react'
 import CameraStream from '../components/CameraStream';
 import MicrophoneCheck from '../components/MicrophoneCheck';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useLocation } from 'react-router-dom';
 
 const TakeExam = () => {
 
     // get the data from the parene about the exam title 
     const { examId } = useParams();
+    const location = useLocation();
+    const query = new URLSearchParams(location.search);
+    const title = query.get("title");
 
     const [userData, setuserData] = useState(null);
 
@@ -263,7 +266,7 @@ const TakeExam = () => {
 
                         {
                             micVerified ? 
-                                <Link to={`/start-exam/${examId}`}>
+                                <Link to={`/start-exam/${examId}?title=${encodeURIComponent(title)}`}>
                                     <button 
                                         className='mt-24 text-2xl bg-primary p-4 rounded-xl text-white hover:cursor-pointer profile__card'
                                     >

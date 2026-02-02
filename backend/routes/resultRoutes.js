@@ -9,7 +9,7 @@ const Question = require('../models/question');
 // to save the results into db
 router.post('/save_results', async (req, res) => {
     try {
-        const { examId, userId, answers } = req.body;
+        const { examId, userId, answers, title } = req.body;
 
         // check if the user exist or not
         const user = await User.findById(userId);
@@ -20,7 +20,7 @@ router.post('/save_results', async (req, res) => {
  
         if (!exam) return res.status(404).json({message: "Exam not found."});
 
-        const newResult = new Result({ examId, userId, answers });
+        const newResult = new Result({ examId, userId, answers, title });
 
         await newResult.save();
 

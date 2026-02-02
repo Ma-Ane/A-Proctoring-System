@@ -5,6 +5,7 @@ const Result = () => {
 
     // taking the email of the logged in user
     const email = localStorage.getItem("email");
+    const userId = localStorage.getItem("userId");
 
     // a sample of the exam results to be printed
     const [examResults, setExamResults] = useState([
@@ -32,11 +33,11 @@ const Result = () => {
     useEffect(() => {
         const fetchExamHistory= async () => {
             try {
-                const response = await fetch(`http://localhost:3000/api/auth/get_exam/${encodeURIComponent(email)}`);
+                const response = await fetch(`http://localhost:3000/api/auth/get_result/${encodeURIComponent(userId)}`);
                 
                 const data = await response.json();
                 setExamResults(data);
-                // console.log("Exam history fetched");
+                // console.log("Exam history fetched", data);
             } catch (error) {
                 console.log("Error fetching exam history", error);
             }
@@ -77,9 +78,9 @@ const Result = () => {
                         <li key={index} className='grid text-base mb-6 md:grid-cols-5 sm:grid-cols-3 gap-2'>
                             <span className='flex-[1]'>{index+1}</span>
                             <span className='flex-[5]'>{exam.title}</span>
-                            <span className='flex-[1]'>{exam.date.split("T")[0]}</span>
-                            <span className={`flex-[1] ${exam.status === 'Graded' ? 'text-green-600' : 'text-red-600'}`}>{exam.status}</span>
-                            <span className='flex-[1]'>{exam.score}</span>
+                            <span className='flex-[1]'>{String(exam.submittedAt).split("T")[0]}</span>
+                            <span className={`flex-[1] ${exam.score !== -10 ? 'text-green-600' : 'text-red-600'}`}>{exam.score === -10 ? "Not graded" : "Graded"}</span>
+                            <span className='flex-[1]'>{exam.score !== -10 ? exam.score : "-"}</span>
                         </li>
                     ))
                 }

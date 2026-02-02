@@ -47,7 +47,7 @@ def startup():
         print("🔵 Loading YOLO face detector...") 
         yolo_model = load_yolo_model( "backend/ML_models/best.pt" ) 
         
-        print("✅ Models loaded successfully") 
+        print("\n✅ Models loaded successfully") 
     
     except Exception as e: 
         print("❌ Error loading models:", e)

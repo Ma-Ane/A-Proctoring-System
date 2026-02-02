@@ -11,12 +11,13 @@ import time
 def get_model(weights):
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     device = 'mps' if torch.backends.mps.is_available() else device
-    print(device)
     
     if device == 'cuda': cudnn.benchmark = True
     
     model = YOLO(weights)                
     model.to(device)
+
+    print("YOLO model loaded on ", device)
     return model
 
 def detect_faces(model, img, box_format='xyxy',th=0.5):

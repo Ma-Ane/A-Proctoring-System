@@ -5,9 +5,15 @@ const MenuBar = () => {
 
     // to show if notification is clicked ot not
     const [isnotification , setIsNotification] = useState(false);
+
+    // to check if the setting button is clicked
+    const [openSettings, setOpenSettings] = useState(false);
     
     // to set the active menu that is being clicked
     const [activeMenu, setActiveMenu] = useState('home');
+
+    // get the role of the user
+    const role = localStorage.getItem("role");
 
   return (
     <div className='relative flex flex-col bg-background py-10 px-3 gap-10 border-r-2 border-r-gray-200'>
@@ -61,12 +67,17 @@ const MenuBar = () => {
                     <span >Notifications</span>    
                 </li>
 
-            <Link to='/results' onClick={() => setActiveMenu('results')}>
-                <li className={`menu__options ${activeMenu === 'results' ? 'bg-primary text-white hover:!bg-primary' : ''}`}>
-                    <i className="ri-file-text-line"></i>
-                    <span>Results</span>    
-                </li>
-            </Link>
+            {
+                role === "Student" ?
+                    <Link to='/results' onClick={() => setActiveMenu('results')}>
+                        <li className={`menu__options ${activeMenu === 'results' ? 'bg-primary text-white hover:!bg-primary' : ''}`}>
+                            <i className="ri-file-text-line"></i>
+                            <span>Results</span>    
+                        </li>
+                    </Link>
+                :
+                    <></>
+            }
 
             <Link to='/instructions' onClick={() => setActiveMenu('instructions')}>
                 <li className={`menu__options ${activeMenu === 'instructions' ? 'bg-primary text-white hover:!bg-primary' : ''}`}>
@@ -74,16 +85,41 @@ const MenuBar = () => {
                     <span>Instructions</span>    
                 </li>
             </Link>
+
+            {
+                role === "Teacher" ? 
+                    <Link to='/set_questions' onClick={() => setActiveMenu('set_questions')}>
+                        <li className={`menu__options ${activeMenu === 'set_questions' ? 'bg-primary text-white hover:!bg-primary' : ''}`}>
+                            <i className="ri-questionnaire-line"></i>
+                            <span>Questions</span>    
+                        </li>
+                    </Link>
+                : 
+                    <></>
+            }
+
+            {
+                role === "Teacher" ?
+                    <Link to='/check_result' onClick={() => setActiveMenu('check_result')}>
+                        <li className={`menu__options ${activeMenu === 'check_result' ? 'bg-primary text-white hover:!bg-primary' : ''}`}>
+                            <i className="ri-calculator-line"></i>
+                            <span>Check Result</span>    
+                        </li>
+                    </Link>
+                :
+                    <></>
+            }
+
             {/* <li className='menu__options'></li> */}
         </ul>
 
         {/* settings button at last  */}
         <div className='absolute bottom-3 flex flex-col gap-3 w-full '>
             <hr className="border-gray-700 w-11/12" />
-            <section className='flex gap-2 justify-center items-center'>
+            <div className='flex gap-2 justify-center items-center hover:cursor-pointer hover:bg-primary hover:p-2 hover:w-[90%] hover:text-white rounded-xl'>
                 <i className="ri-settings-5-line text-2xl"></i>
-                <p className='text-xl'>Settings</p>
-            </section>
+                <p className='text-xl' onClick={() => setOpenSettings(true)}>Settings</p>
+            </div>
         </div>
     </div>
   )

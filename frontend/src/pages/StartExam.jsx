@@ -299,8 +299,6 @@ export default function StartExam() {
                 </div>
 
 
-
-
                 {/* Video and status container */}
                 <div className={`mt-10 transition-opacity duration-300 ${submitted ? "opacity-20 pointer-events-none" : ""}`}>
                     <video ref={videoRef} autoPlay muted style={{ width: 400, borderRadius: 8 }} />
@@ -314,7 +312,7 @@ export default function StartExam() {
                         <p>⏱️ Absent: {status.absent ? "❌" : "Present"}</p>
                     </div>
 
-                    {violations === "" && (
+                    {violations === "Multiple face violation detected" && (
                         <div className="bg-red-500 p-2 mt-10 text-lg rounded-xl text-white">
                             Multiple face detected.
                         </div>

@@ -133,8 +133,9 @@ const LoginPage = () => {
             else {
                 localStorage.setItem("email", logInUser.email);
                 localStorage.setItem("name", data.name);
-                localStorage.setItem("image", data.image)
-                localStorage.setItem("userId", data.id)
+                localStorage.setItem("image", data.image);
+                localStorage.setItem("userId", data.id);
+                localStorage.setItem("role", data.role);
                 // alert("User found. Press OK to go to home screen.")
                 navigate('/');
             }

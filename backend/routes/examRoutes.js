@@ -4,16 +4,24 @@ const router = express.Router();
 
 const Exam = require('../models/exam');
 
+// save the exam instance in the db
 router.post('/', async (req, res) => {
-   try {
-    const newExam = new Exam(req.body);         // get all the data from the req body
-    await newExam.save();
+  try {
+    const newExam = new Exam(req.body);   // create exam instance
+    await newExam.save();                 // save to DB
 
-    res.status(201).json({message: "Exam created successfully."});
-   } catch (error) {
-        res.status(500).json({error: error.message});
-   } 
+    res.status(201).json({
+      message: "Exam created successfully.",
+      examId: newExam._id                 // return examId
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      error: error.message
+    });
+  }
 });
+
 
 
 // exam for each batch of students

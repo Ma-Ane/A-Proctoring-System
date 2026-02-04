@@ -10,7 +10,7 @@ const examSchema = new mongoose.Schema({
         ref: 'user'
     },
     time: String,
-    date: Date,
+    date: {type: Date, default: Date.now},
     isActive: {type: Boolean, default: true},
     batch: String,
 });

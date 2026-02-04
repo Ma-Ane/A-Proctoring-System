@@ -7,6 +7,8 @@ import Result from "./pages/Result";
 import Instructions from "./pages/Instructions";
 import TakeExam from "./pages/TakeExam";
 import StartExam from "./pages/StartExam";
+import SetQuestions from "./pages/SetQuestions";
+import CheckResult from "./pages/CheckResult";
 
 const router = createBrowserRouter([
     {
@@ -18,9 +20,13 @@ const router = createBrowserRouter([
             {index: true, element: <HomePage />},
             {path: "/portfolio", element: <Portfolio />},
             {path: '/results', element: <Result />},
-            {path: '/instructions', element: <Instructions />}
+            {path: '/instructions', element: <Instructions />},
+            {path: '/set_questions', element: <SetQuestions />},
+            {path: '/check_result', element: <CheckResult />}
         ]
     },
+
+    // for a fresh new page
 
     {
         path: '/login',

@@ -6,6 +6,7 @@ const Result = () => {
     // taking the email of the logged in user
     const email = localStorage.getItem("email");
     const userId = localStorage.getItem("userId");
+    const profileImg = localStorage.getItem
 
     // a sample of the exam results to be printed
     const [examResults, setExamResults] = useState([
@@ -52,7 +53,7 @@ const Result = () => {
         {/* section for student image and name  */}
         <section className='flex flex-col gap-3 items-center'>
             <img 
-                src="logo.webp" 
+                src={profileImg}
                 alt="" 
                 className='size-28 rounded-full'
             />

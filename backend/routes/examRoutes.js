@@ -3,6 +3,7 @@ const express = require('express');
 const router = express.Router();
 
 const Exam = require('../models/exam');
+const User = require('../models/user');
 
 // save the exam instance in the db
 router.post('/', async (req, res) => {
@@ -23,7 +24,6 @@ router.post('/', async (req, res) => {
 });
 
 
-
 // exam for each batch of students
 router.get('/:batch', async (req, res) => {
     try {
@@ -37,6 +37,24 @@ router.get('/:batch', async (req, res) => {
     } catch (error) {
         res.status(500).json({error: error.message});
     }
+});
+
+
+// for teachers to get the exam they have created
+router.get('/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    const foundUser = await User.findById(userId);
+    if (!foundUser) return res.status(404).json({error: "No user found."});
+
+    const exams = await Exam.find({ createdBy: new mongoose.Types.ObjectId(userId) });
+    if (exams.length === 0) return res.status(404).json({error: "No exam has been created."});
+
+    res.status(200).json(exams);
+  } catch (error) {
+    res.status(500).json({error: error.message});
+  }
 });
 
 

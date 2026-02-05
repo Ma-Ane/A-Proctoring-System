@@ -97,23 +97,6 @@ router.get('/get_user/:email', async (req, res) => {
     }
 });
 
-// get the exams of particular user from db
-// router.get('/get_exam/:email', async (req, res) => {
-//     try {
-//         const { email } = req.params;
-
-//         // to find only one user, use findOne
-//         const foundUser = await User.findOne({email: email});
-//         if (!foundUser) throw new Error ("User not found");
-
-//         // only send the exam details to the frontend
-//         res.status(200).json(foundUser.exams);
-//     } catch (error) {
-//         res.status(500).json({error: error.message});
-//     }
-// });
-
-// get embedding of current user from db
 router.get('/get_embedding/:email', async (req, res) => {
     try {
         const { email } = req.params;

@@ -4,9 +4,6 @@ require("dotenv").config();
 const connectDB = require('./config_db');
 const path = require('path');
 
-// 6cBfnFt5MtZSRnQc
-// maharjanmanjit46_db_user
-
 connectDB(  );
 
 const app = express();

@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const LoginPage = () => {
@@ -17,6 +18,11 @@ const LoginPage = () => {
 
     // for storing the login info the user 
     const [logInUser, setLogInUser] = useState({email: "", password: ""})
+
+    // reset to null after every render
+    useEffect(() => {
+        setLogInUser({email: "", password: ""});
+    }, []);
 
     // for storing values before creating a new user
     const [tempUser, setTempUser] = useState({

@@ -5,6 +5,10 @@ const Portfolio = () => {
     // for now 
     const batch = "BCT";
 
+    // get from local Storage
+    const role = localStorage.getItem("role");
+    const userId = localStorage.getItem("userId");
+
     // paxii user lai fetch garnuu parxaa
 
     // for chosing between attendance and personal details 
@@ -70,7 +74,7 @@ const Portfolio = () => {
             <img 
                 src={`http://localhost:3000/uploads/${userImagePath}`}
                 alt="" 
-                className='size-28 rounded-full'
+                className='size-28 rounded-full object-cover'
             />
             <h1 className='text-2xl font-bold'>{userName}</h1>
         </section>
@@ -105,15 +109,21 @@ const Portfolio = () => {
                             <span className='flex-[1]'>Date</span>
                             <span className='flex-[1]'>Status</span>
                         </li>
+
+                        {/* different content for students and teachers  */}
                         {
-                            examInBatch.map((exam, index) => (
-                                <li key={index} className='flex'>
-                                    <span className='flex-[1]'>{index+1}</span>
-                                    <span className='flex-[5]'>{exam.title}</span>
-                                    <span className='flex-[1]'>{exam.date.split("T")[0]}</span>
-                                    <span className='flex-[1]'>Attended</span>
-                                </li>
-                            ))
+                            role === 'Student' ?
+                                /* for students to see which exams did they appear in  */
+                                examInBatch.map((exam, index) => (
+                                    <li key={index} className='flex'>
+                                        <span className='flex-[1]'>{index+1}</span>
+                                        <span className='flex-[5]'>{exam.title}</span>
+                                        <span className='flex-[1]'>{exam.date.split("T")[0]}</span>
+                                        <span className='flex-[1]'>Attended</span>
+                                    </li>
+                                ))
+                            :
+                                <></>
                         }    
                     </ul>
                 )

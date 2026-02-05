@@ -63,6 +63,7 @@ const SetQuestions = () => {
   const submitExam = async () => {
     let examId;
 
+    // create exam response
     try {
       const payload = {
         title: examTitle,
@@ -73,6 +74,7 @@ const SetQuestions = () => {
         batch
       };
 
+      // create instance of the exam and get the exam id
       const response = await fetch("http://localhost:3000/api/exam", {
         method: "POST",
         headers: {
@@ -89,6 +91,7 @@ const SetQuestions = () => {
       return;
     }
 
+    // add the questions to the db
     try {
       const response = await fetch("http://localhost:3000/question/add_questions", {
         method: "POST",
@@ -223,6 +226,7 @@ const SetQuestions = () => {
       {/* Question Form */}
       <div className="bg-white shadow rounded-xl p-6 flex flex-col gap-4">
 
+        {/* // input question section  */}
         <div>
           <label className="font-medium">Question</label>
           <textarea
@@ -233,6 +237,7 @@ const SetQuestions = () => {
           />
         </div>
 
+        {/* input options section  */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {options.map((opt, index) => (
             <div
@@ -267,7 +272,7 @@ const SetQuestions = () => {
       {questions.length > 0 && (
         <button
           onClick={submitExam}
-          className="bg-green-600 text-white py-3 rounded-xl text-lg font-semibold hover:bg-green-700 transition shadow-md"
+          className="bg-green-600 text-white py-3 rounded-xl text-lg font-semibold hover:bg-green-700 transition shadow-xl"
         >
           Submit Exam
         </button>

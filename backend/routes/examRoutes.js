@@ -4,6 +4,7 @@ const router = express.Router();
 
 const Exam = require('../models/exam');
 const User = require('../models/user');
+const exam = require('../models/exam');
 
 // save the exam instance in the db
 router.post('/', async (req, res) => {
@@ -41,7 +42,7 @@ router.get('/:batch', async (req, res) => {
 
 
 // for teachers to get the exam they have created
-router.get('/:userId', async (req, res) => {
+router.get('/get_exam_teacher/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
 
@@ -52,6 +53,27 @@ router.get('/:userId', async (req, res) => {
     if (exams.length === 0) return res.status(404).json({error: "No exam has been created."});
 
     res.status(200).json(exams);
+  } catch (error) {
+    res.status(500).json({error: error.message});
+  }
+});
+
+
+// to mark of make any exam active or inactive
+router.patch("/toggle_active_status/:examId", async (req, res) => {
+  try {
+    const { examId } = req.params;
+
+    const foundExam  = await Exam.findById(examId);
+
+    if (!foundExam) return res.status(404).json({error: "Exam not found."});
+
+    // toggle status
+    foundExam.isActive = !foundExam.isActive;
+
+    await foundExam.save();
+
+    res.status(200).json({message: "Exam status updated successfully.", isActive: foundExam.isActive})
   } catch (error) {
     res.status(500).json({error: error.message});
   }

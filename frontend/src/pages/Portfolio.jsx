@@ -20,6 +20,11 @@ const Portfolio = () => {
     // for attendance exam
     const [examInBatch, setExamInBatch] = useState([]);
 
+    // for the exams for teacher 
+    const [examForTeacher, setExamForTeacher] = useState([]);
+    // check if the exam status is changed
+    const [toggleStatus, setToggleStatus] = useState(true);
+
     // render the available exams for the user in his/her batch
     useEffect(() => {
         const fetchUserData = async () => {
@@ -64,6 +69,45 @@ const Portfolio = () => {
         fetchUserData();
         fetchExamInBatch();
     }, []);
+
+    // to fetch the exams cretaed by the teacher account
+    const getExamCreated = async () => {
+        try {
+            const response = await fetch(`http://localhost:3000/api/exam/get_exam_teacher/${encodeURIComponent(userId)}`);
+
+            if (!response.ok) throw new Error ("Error while fetching exams for teacher.");
+
+            const data = await response.json();
+
+            setExamForTeacher(data);
+        } catch (error) {
+            console.log(error);
+        }
+    };
+
+    // to load the exams for user or the func above
+    useEffect(() => {
+        if (role === 'Teacher') {
+            getExamCreated();
+        }
+    }, [role, toggleStatus]);
+
+    // to change the active status of the exam
+    const changeActiveStatus = async (examId) => {
+        try {
+            const response = await fetch(`http://localhost:3000/api/exam/toggle_active_status/${encodeURIComponent(examId)}`, {
+                method: "PATCH"
+            });
+
+            if (!response.ok) throw new Error("Error in toggle API.");
+
+            const data = await response.json();
+            setToggleStatus((prev) => !prev);
+            console.log(data.message);
+        } catch (error) {
+            console.log(error);
+        }
+    };
 
   return (
     // main dic for all contents 
@@ -123,7 +167,24 @@ const Portfolio = () => {
                                     </li>
                                 ))
                             :
-                                <></>
+                                // for teachers to check the exmas created by them
+                                examForTeacher.map((exam, index) => (
+                                    <li key={index} className='flex'>
+                                        <span className='flex-[1]'>{index+1}</span>
+                                        <span className='flex-[5]'>{exam.title}</span>
+                                        <span className='flex-[1]'>{exam.date.split("T")[0]}</span>
+                                        <section className='flex-[1] gap-3 flex'>
+                                            {/* // for the active status  */}
+                                            <span className={`${exam.isActive ? "text-green-600" : "text-red-500"}`}>{exam.isActive ? "Active" : "Ended"}</span>
+                                            {/* to show the option to change the status  */}
+                                            <i 
+                                                className="ri-refresh-fill hover:cursor-pointer hover:scale-105"
+                                                onClick={() => changeActiveStatus(exam._id)}
+                                            >    
+                                            </i>
+                                        </section>
+                                    </li>
+                                ))                                      
                         }    
                     </ul>
                 )

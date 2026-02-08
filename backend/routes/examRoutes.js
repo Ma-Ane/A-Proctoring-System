@@ -29,7 +29,9 @@ router.post('/', async (req, res) => {
 router.get('/:batch', async (req, res) => {
     try {
         const { batch } = req.params;
-        const data = await Exam.find({batch: batch});
+
+        // find the exam in the batch that is active
+        const data = await Exam.find({ batch: batch, isActive: true });
         
         if (!data) throw new Error("No exams found");
 

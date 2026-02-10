@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-const LoginPage = () => {
+const LoginPage = ({onLogin}) => {
 
     const navigate = useNavigate();
 
@@ -143,6 +143,7 @@ const LoginPage = () => {
                 localStorage.setItem("userId", data.id);
                 localStorage.setItem("role", data.role);
                 // alert("User found. Press OK to go to home screen.")
+                onLogin();
                 navigate('/');
             }
 

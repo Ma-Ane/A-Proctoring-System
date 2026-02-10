@@ -1,4 +1,4 @@
-import { createBrowserRouter } from "react-router-dom"
+import { createBrowserRouter, Navigate } from "react-router-dom";
 import App from "./App";
 import HomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";
@@ -10,38 +10,89 @@ import StartExam from "./pages/StartExam";
 import SetQuestions from "./pages/SetQuestions";
 import CheckResult from "./pages/CheckResult";
 
-const router = createBrowserRouter([
-    {
-        // basic home page
-        path: '/',
-        element: <App />,
+const ProtectedRoute = ({ isLoggedIn, children }) => {
+  return isLoggedIn ? children : <Navigate to="/login" replace />;
+};
 
-        children: [
-            {index: true, element: <HomePage />},
-            {path: "/portfolio", element: <Portfolio />},
-            {path: '/results', element: <Result />},
-            {path: '/instructions', element: <Instructions />},
-            {path: '/set_questions', element: <SetQuestions />},
-            {path: '/check_result', element: <CheckResult />}
-        ]
+const router = (isLoggedIn, setIsLoggedIn) =>
+  createBrowserRouter([
+    {
+      path: "/",
+      element: <App />,
+      children: [
+        {
+          index: true,
+          element: (
+            <ProtectedRoute isLoggedIn={isLoggedIn}>
+              <HomePage />
+            </ProtectedRoute>
+          ),
+        },
+        {
+          path: "portfolio",
+          element: (
+            <ProtectedRoute isLoggedIn={isLoggedIn}>
+              <Portfolio />
+            </ProtectedRoute>
+          ),
+        },
+        {
+          path: "results",
+          element: (
+            <ProtectedRoute isLoggedIn={isLoggedIn}>
+              <Result />
+            </ProtectedRoute>
+          ),
+        },
+        {
+          path: "instructions",
+          element: (
+            <ProtectedRoute isLoggedIn={isLoggedIn}>
+              <Instructions />
+            </ProtectedRoute>
+          ),
+        },
+        {
+          path: "set_questions",
+          element: (
+            <ProtectedRoute isLoggedIn={isLoggedIn}>
+              <SetQuestions />
+            </ProtectedRoute>
+          ),
+        },
+        {
+          path: "check_result",
+          element: (
+            <ProtectedRoute isLoggedIn={isLoggedIn}>
+              <CheckResult />
+            </ProtectedRoute>
+          ),
+        },
+      ],
     },
 
-    // for a fresh new page
-
     {
-        path: '/login',
-        element: <LoginPage/>
+      path: "/login",
+      element: <LoginPage onLogin={() => setIsLoggedIn(true)} />,
     },
 
     {
-        path: "/take-exam/:examId",
-        element: <TakeExam/>
+      path: "/take-exam/:examId",
+      element: (
+        <ProtectedRoute isLoggedIn={isLoggedIn}>
+          <TakeExam />
+        </ProtectedRoute>
+      ),
     },
-    {
-        path: '/start-exam/:examId',
-        element: <StartExam />
-    }
-]);
 
+    {
+      path: "/start-exam/:examId",
+      element: (
+        <ProtectedRoute isLoggedIn={isLoggedIn}>
+          <StartExam />
+        </ProtectedRoute>
+      ),
+    },
+  ]);
 
 export default router;

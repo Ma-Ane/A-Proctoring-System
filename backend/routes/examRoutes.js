@@ -4,7 +4,6 @@ const router = express.Router();
 
 const Exam = require('../models/exam');
 const User = require('../models/user');
-const exam = require('../models/exam');
 
 // save the exam instance in the db
 router.post('/', async (req, res) => {

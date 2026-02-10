@@ -90,5 +90,19 @@ router.post('/calculate_score', async (req, res) => {
     }
 });
 
+// get the results of the exam created by that user
+router.get("/get_exam/:examId", async (req, res) => {
+    try {
+        const { examId } = req.params;
+
+        const foundResults = await Result.find({ examId: examId });
+
+        if (foundResults.length === 0) return res.status(404).json({message: "Exams not found."});
+
+        res.status(200).json(foundResults);
+    } catch (error) {
+        res.status(500).json({error: error.message});
+    }
+})
 
 module.exports = router;

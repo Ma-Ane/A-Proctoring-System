@@ -12,6 +12,7 @@ import time
 # Custom file 
 from backend.ML_helper_function.faceVerification import load_face_verification_model, get_embedding, cosine_similarity
 from backend.ML_helper_function.multipleFaceDetection import load_yolo_model, detect_faces
+from backend.ML_helper_function.gazeDetection import detect_gaze
 
 app = FastAPI()
 
@@ -127,6 +128,15 @@ async def check_verification(user_image_embedding: str = Form(...), webcam_image
 async def proctor_ws(websocket: WebSocket):
     await websocket.accept()
     print("🟢 Client connected")
+    
+    state = {
+        "warning_count": 0,
+        "suspicion_score": 0.0,
+        "off_screen_start": None,
+        "eyes_down_start": None,
+        "prev_yaw": 0.0,
+        "frame_count": 0
+    }
 
     last_face_time = 0
     last_inference = 0
@@ -141,6 +151,8 @@ async def proctor_ws(websocket: WebSocket):
     try:
         while True:
             data = await websocket.receive_text()
+            
+            print("Data fetched in websocket try module")
             
             # Ignore empty frames
             if not data or len(data) < 100:
@@ -167,6 +179,12 @@ async def proctor_ws(websocket: WebSocket):
                 multi_face_counter += 1
             else:
                 multi_face_counter = 0
+                
+            print("Detect faces works")
+
+            #Detect gaze
+            relative_yaw, sclera, side, gaze_state, state["suspicion_score"], state["warning_count"] = detect_gaze(img, state)
+            print("Detect gaze works")
 
             await websocket.send_json({
                 "faces_detected": face_count,
@@ -175,7 +193,14 @@ async def proctor_ws(websocket: WebSocket):
                 "absent": absence_seconds > 5,
                 "absence_seconds": round(absence_seconds, 1),
                 "no_face": face_count == 0,
+                "yaw": relative_yaw,
+                "sclera": sclera,
+                "gaze_side": side,
+                "gaze_state": gaze_state,
+                "suspicion_score": state["suspicion_score"],
+                "warning_count": state["warning_count"]
             })
 
     except Exception as e:
-        print("🔴 Client disconnected", e)
+        # await websocket.close(code=1011, reason=str(e))
+        print("🔴 Client disconnected:", e)

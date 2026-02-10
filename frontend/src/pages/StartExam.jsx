@@ -46,6 +46,10 @@ export default function StartExam() {
         multi_face_violation: false,
         absent: false,
         no_face: true,
+        yaw: 0,
+        gaze_side: "STRAIGHT",
+        suspicioun_score: 0,
+        warning_count: 0
     });
 
     // to enter full screen
@@ -310,6 +314,10 @@ export default function StartExam() {
                         <p>🚫 Multi-face violation: {status.multi_face_violation ? "❌" : "OK"}</p>
                         <p>🙈 No face detected: {status.no_face ? "⚠️" : "No"}</p>
                         <p>⏱️ Absent: {status.absent ? "❌" : "Present"}</p>
+                        <p> Yaw: {status.yaw}</p>
+                        <p> Gaze side: {status.gaze_side}</p>
+                        <p> Suspicioun score: {status.suspicion_score}</p>
+                        <p> Warning count: {status.warning_count}</p>
                     </div>
 
                     {violations === "Multiple face violation detected" && (

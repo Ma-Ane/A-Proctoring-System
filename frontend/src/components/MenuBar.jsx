@@ -1,19 +1,26 @@
 import React, { useState } from 'react'
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 const MenuBar = () => {
+
+    const navigate = useNavigate()
 
     // to show if notification is clicked ot not
     const [isnotification , setIsNotification] = useState(false);
 
     // to check if the setting button is clicked
-    const [openSettings, setOpenSettings] = useState(false);
+    const [islogout, setLogout] = useState(false);
     
     // to set the active menu that is being clicked
     const [activeMenu, setActiveMenu] = useState('home');
 
     // get the role of the user
     const role = localStorage.getItem("role");
+
+    const handleLogout = ()=>{
+        localStorage.clear();
+        navigate('/login');
+    }
 
   return (
     <div className='relative flex flex-col bg-background py-10 px-3 gap-10 border-r-2 border-r-gray-200'>
@@ -117,10 +124,29 @@ const MenuBar = () => {
         <div className='absolute bottom-3 flex flex-col gap-3 w-full '>
             <hr className="border-gray-700 w-11/12" />
             <div className='flex gap-2 justify-center items-center hover:cursor-pointer hover:bg-primary hover:p-2 hover:w-[90%] hover:text-white rounded-xl'>
-                <i className="ri-settings-5-line text-2xl"></i>
-                <p className='text-xl' onClick={() => setOpenSettings(true)}>Settings</p>
+                <i className="ri-logout-box-line text-2xl"></i>
+                <p className='text-xl' onClick={() => setLogout(true)}>Logout</p>
             </div>
         </div>
+
+        {
+            islogout && 
+                <div 
+                    className='fixed inset-0 opacity-90 bg-black w-screen h-screen flex items-center justify-center' 
+                    onClick={() => setLogout(false)}
+                >
+                    <div 
+                        className='relative bg-primary text-white w-11/12 sm:w-2/3 md:w-1/3 h-1/4 rounded-3xl flex flex-col gap-5 items-center justify-center z-10' 
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <p className='text-2xl'>Are you sure you want to logout?</p>
+                        <div 
+                            className='bg-black-400 flex w-full items-center justify-end mr-28 hover:cursor-pointer hover:text-lg' 
+                            onClick={() => handleLogout()}
+                        > Log out</div>
+                    </div>
+                </div>
+        }
     </div>
   )
 }

@@ -301,7 +301,7 @@ export default function StartExam() {
                         </>
                     }
                 </div>
-
+                
 
                 {/* Video and status container */}
                 <div className={`mt-10 transition-opacity duration-300 ${submitted ? "opacity-20 pointer-events-none" : ""}`}>

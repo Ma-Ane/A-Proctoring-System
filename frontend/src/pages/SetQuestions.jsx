@@ -113,7 +113,7 @@ const SetQuestions = () => {
   return (
     <div className="max-w-5xl mx-auto p-4 flex flex-col gap-6">
 
-      <h1 className="text-2xl lg:text-4xl font-bold text-center">
+      <h1 className="mt-5 text-2xl lg:text-4xl font-bold text-center">
         Set Questions
       </h1>
 

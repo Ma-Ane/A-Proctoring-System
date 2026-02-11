@@ -136,12 +136,12 @@ const MenuBar = () => {
                     onClick={() => setLogout(false)}
                 >
                     <div 
-                        className='relative bg-primary text-white w-11/12 sm:w-2/3 md:w-1/3 h-1/4 rounded-3xl flex flex-col gap-5 items-center justify-center z-10' 
+                        className='relative bg-primary text-white px-8 py-8 rounded-3xl flex flex-col gap-8 items-center justify-center' 
                         onClick={(e) => e.stopPropagation()}
                     >
                         <p className='text-2xl'>Are you sure you want to logout?</p>
                         <div 
-                            className='bg-black-400 flex w-full items-center justify-end mr-28 hover:cursor-pointer hover:text-lg' 
+                            className='bg-black-400 flex w-full items-center justify-end mr-8 hover:cursor-pointer hover:text-secondary' 
                             onClick={() => handleLogout()}
                         > Log out</div>
                     </div>

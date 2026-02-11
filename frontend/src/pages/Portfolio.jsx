@@ -50,6 +50,7 @@ const Portfolio = () => {
                 console.log("Error fetching user data", error);
             }
         };
+
         const fetchExamInBatch = async () => {
             try {
                 const response = await fetch(`http://localhost:3000/api/exam/${encodeURIComponent(batch)}`);
@@ -178,7 +179,7 @@ const Portfolio = () => {
                                             <span className={`${exam.isActive ? "text-green-600" : "text-red-500"}`}>{exam.isActive ? "Active" : "Ended"}</span>
                                             {/* to show the option to change the status  */}
                                             <i 
-                                                className="ri-refresh-fill hover:cursor-pointer hover:scale-105"
+                                                className={`${exam.isActive ? "ri-toggle-fill" : "ri-toggle-line"} text-2xl hover:cursor-pointer hover:scale-105`}
                                                 onClick={() => changeActiveStatus(exam._id)}
                                             >    
                                             </i>

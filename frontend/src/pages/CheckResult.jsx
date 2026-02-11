@@ -136,7 +136,7 @@ export default function CheckResult() {
             <div
               key={exam._id}
               onClick={() => setExamId(exam._id)}
-              className="border rounded-lg p-4 cursor-pointer hover:shadow-md transition"
+              className="border rounded-lg p-4 cursor-pointer hover:shadow-xl transition"
             >
               <h2 className="text-xl font-bold mb-2">{exam.title}</h2>
 

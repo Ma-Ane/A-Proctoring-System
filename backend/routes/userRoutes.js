@@ -82,7 +82,8 @@ router.post('/register', async (req, res) => {
     }
 });
 
-router.get('/get_user/:email', async (req, res) => {
+// get the user details using email
+router.get('/get_user_email/:email', async (req, res) => {
     try {
         const { email } = req.params;
 
@@ -96,6 +97,21 @@ router.get('/get_user/:email', async (req, res) => {
         res.status(500).json({error: error.message});
     }
 });
+
+// get the user details using userId
+router.get('/get_user_userId/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    const foundUser = await User.findById(userId);
+    if (!foundUser) return res.status(404).json({ error: "User not found" });
+
+    res.status(200).json(foundUser);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 
 router.get('/get_embedding/:email', async (req, res) => {
     try {

@@ -13,6 +13,7 @@ const resultSchema = new mongoose.Schema({
     userId: {
         type: mongoose.Schema.Types.ObjectId,
         required: true,        
+        ref: 'user'
     },
     answers: [AnswerSchema],
     submittedAt: {type: Date, default: Date.now},

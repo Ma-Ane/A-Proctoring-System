@@ -60,12 +60,15 @@ const getCorrectAnswers = async (examId, answers) => {
 };
 
 // to calculate the scores of all result
-router.post('/calculate_score', async (req, res) => {
+router.post('/calculate_score/:examId', async (req, res) => {
     try {
-        const results = await Result.find({ score: -10 });
+        const { examId } = req.params;
+
+        // Only fetch ungraded results (-10) for the specific examId
+        const results = await Result.find({ examId: examId, score: -10 });
 
         if (!results.length) {
-            return res.status(200).json({ message: "No ungraded results found." });
+            return res.status(200).json({ message: "No ungraded results found for this exam." });
         }
 
         await Promise.all(results.map(async (result) => {
@@ -83,26 +86,42 @@ router.post('/calculate_score', async (req, res) => {
             }
         }));
 
-        res.status(200).json({ message: "Scores calculated and updated." });
+        res.status(200).json({ message: "Scores calculated and updated for the exam." });
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: error.message });
     }
 });
 
+
 // get the results of the exam created by that user
-router.get("/get_exam/:examId", async (req, res) => {
+// router.get("/get_exam/:examId", async (req, res) => {
+//     try {
+//         const { examId } = req.params;
+
+//         const foundResults = await Result.find({ examId: examId });
+
+//         if (foundResults.length === 0) return res.status(404).json({message: "Exams not found."});
+
+//         res.status(200).json(foundResults);
+//     } catch (error) {
+//         res.status(500).json({error: error.message});
+//     }
+// })
+
+
+// to get the count and the details of the user for that particular exam created by teacher
+router.get("/student_exam_details/:examId", async (req, res) => {
     try {
         const { examId } = req.params;
 
-        const foundResults = await Result.find({ examId: examId });
-
-        if (foundResults.length === 0) return res.status(404).json({message: "Exams not found."});
+        const foundResults = await Result.find({examId: examId});
 
         res.status(200).json(foundResults);
     } catch (error) {
-        res.status(500).json({error: error.message});
+        res.status(500).json({error: error.message});   
     }
-})
+}); 
+
 
 module.exports = router;

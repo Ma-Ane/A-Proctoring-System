@@ -45,10 +45,10 @@ export default function StartExam() {
         multiple_faces: false,
         multi_face_violation: false,
         absent: false,
-        no_face: true,
+        no_face: false,  // <-- change to false
         yaw: 0,
         gaze_side: "STRAIGHT",
-        suspicioun_score: 0,
+        suspicion_score: 0,
         warning_count: 0
     });
 
@@ -90,6 +90,50 @@ export default function StartExam() {
             if (streamRef) {
                 streamRef.getTracks().forEach(track => track.stop());
             }
+        };
+    }, []);
+
+    // ------------------ FULLSCREEN LOCK ------------------
+    useEffect(() => {
+        const handleFullScreenChange = () => {
+            const elem = document.documentElement;
+            if (!document.fullscreenElement) {
+                // Force fullscreen back if user tries to exit
+                if (elem.requestFullscreen) elem.requestFullscreen();
+                else if (elem.mozRequestFullScreen) elem.mozRequestFullScreen();
+                else if (elem.webkitRequestFullscreen) elem.webkitRequestFullscreen();
+                else if (elem.msRequestFullscreen) elem.msRequestFullscreen();
+            }
+        };
+
+        document.addEventListener("fullscreenchange", handleFullScreenChange);
+        document.addEventListener("webkitfullscreenchange", handleFullScreenChange);
+        document.addEventListener("mozfullscreenchange", handleFullScreenChange);
+        document.addEventListener("MSFullscreenChange", handleFullScreenChange);
+
+        return () => {
+            document.removeEventListener("fullscreenchange", handleFullScreenChange);
+            document.removeEventListener("webkitfullscreenchange", handleFullScreenChange);
+            document.removeEventListener("mozfullscreenchange", handleFullScreenChange);
+            document.removeEventListener("MSFullscreenChange", handleFullScreenChange);
+        };
+    }, []);
+
+    // ------------------ TAB / WINDOW FOCUS MONITORING ------------------
+    useEffect(() => {
+        const handleVisibilityChange = () => {
+            if (document.hidden) {
+                setViolations("User switched away from exam tab/window");
+                // TODO: Optionally send a record to server here
+            }
+        };
+
+        window.addEventListener("blur", handleVisibilityChange);
+        document.addEventListener("visibilitychange", handleVisibilityChange);
+
+        return () => {
+            window.removeEventListener("blur", handleVisibilityChange);
+            document.removeEventListener("visibilitychange", handleVisibilityChange);
         };
     }, []);
 
@@ -159,7 +203,6 @@ export default function StartExam() {
     // to store answers into db
     const submitAnswers = async () => {
         try {
-            // starting the submission process
             setSubmitted(false);
 
             const response = await fetch('http://localhost:3000/result/save_results', {
@@ -174,7 +217,6 @@ export default function StartExam() {
             });
 
             const data = await response.json();
-            // console.log(data)
 
             if (data.error) console.log(data.error);
         } catch (error) {
@@ -184,13 +226,11 @@ export default function StartExam() {
         }
     };
 
-    // function to handle the next button
     const handleNextButton = () => {
         if (!currentQuestion || selectedOption === null) return;
 
         const selectedAnswerValue = currentQuestion.options[selectedOption];
 
-        // Store the answer
         setAnswers((prev) => [
             ...prev,
             {
@@ -200,15 +240,8 @@ export default function StartExam() {
         ]);
 
         if (currentIndex === questions.length - 1) {
-            // Last question: submit answers
-            console.log("All answers submitted:", [
-                ...answers,
-                { title: currentQuestion.title, answer: selectedAnswerValue }
-            ]);
-            // TODO: send answers to backend API
             submitAnswers();
         } else {
-            // Move to next question
             setCurrentIndex((prev) => prev + 1);
         }
     };
@@ -221,11 +254,8 @@ export default function StartExam() {
             setViolations("No face detected");
         } else if (status.absent) {
             setViolations("Candidate absent");
-        } else {
-            setViolations("");
         }
     }, [status]);
-
 
     return (
         questions.length > 0 ?
@@ -235,12 +265,10 @@ export default function StartExam() {
                 <div className={`relative h-full w-full flex-2 p-5 mt-10 transition-opacity duration-300 ${submitted ? "opacity-20 pointer-events-none" : ""}`}>
                     {currentQuestion &&
                         <>
-                            {/* questionn  */}
                             <h2 className="mt-4 text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold">
                                 {currentIndex+1}. {currentQuestion.title}
                             </h2>
 
-                            {/* optionsss  */}
                             <ul className="mt-40">
                                 {currentQuestion.options.map((option, index) => {
                                     const isSelected = selectedOption === index;
@@ -273,7 +301,6 @@ export default function StartExam() {
                                 })}
                             </ul>
 
-                            {/* Next button */}
                             <button
                                 className="absolute right-5 mt-4 px-4 py-2 bg-blue-600 text-white rounded text-xl hover:scale-110 hover:cursor-pointer"
                                 onClick={handleNextButton}
@@ -282,7 +309,6 @@ export default function StartExam() {
                                 {currentIndex === questions.length - 1 ? "Submit" : "Next"}
                             </button>
 
-                            {/* progress bar like for no of questions */}
                             <div 
                                 className="absolute -bottom-24 w-full h-3 rounded-lg overflow-hidden flex transition-all duration-300 ease-in-out"
                             >
@@ -302,8 +328,6 @@ export default function StartExam() {
                     }
                 </div>
                 
-
-                {/* Video and status container */}
                 <div className={`mt-10 transition-opacity duration-300 ${submitted ? "opacity-20 pointer-events-none" : ""}`}>
                     <video ref={videoRef} autoPlay muted style={{ width: 400, borderRadius: 8 }} />
                     <canvas ref={canvasRef} style={{ display: "none" }} />
@@ -316,18 +340,17 @@ export default function StartExam() {
                         <p>⏱️ Absent: {status.absent ? "❌" : "Present"}</p>
                         <p> Yaw: {status.yaw}</p>
                         <p> Gaze side: {status.gaze_side}</p>
-                        <p> Suspicioun score: {status.suspicion_score}</p>
+                        <p> Suspicion score: {status.suspicion_score}</p>
                         <p> Warning count: {status.warning_count}</p>
                     </div>
 
-                    {violations === "Multiple face violation detected" && (
+                    {violations && (
                         <div className="bg-red-500 p-2 mt-10 text-lg rounded-xl text-white">
-                            Multiple face detected.
+                            {violations}
                         </div>
                     )}
                 </div>
 
-                {/* Submit success dialog (separate, fully visible) */}
                 {submitted && (
                     <div className="fixed inset-0 flex items-center justify-center z-50">
                         <div className="opacity-80 bg-primary text-white p-5 rounded-xl shadow-xl w-fit flex flex-col gap-3 items-center">

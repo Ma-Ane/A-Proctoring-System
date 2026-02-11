@@ -47,7 +47,7 @@ const TakeExam = () => {
                         return;
                     }
     
-                    const response = await fetch(`http://localhost:3000/api/auth/get_user/${email}`);
+                    const response = await fetch(`http://localhost:3000/api/auth/get_user_email/${email}`);
     
                     if (!response.ok) {
                         throw new Error("Failed to fetch user");

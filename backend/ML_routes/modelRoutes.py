@@ -129,6 +129,11 @@ async def proctor_ws(websocket: WebSocket):
     await websocket.accept()
     print("🟢 Client connected")
     
+    relative_yaw = 0.0
+    sclera = 0.0
+    side = "STRAIGHT"
+    gaze_state = "ON_SCREEN"
+    
     state = {
         "warning_count": 0,
         "suspicion_score": 0.0,
@@ -139,8 +144,10 @@ async def proctor_ws(websocket: WebSocket):
     }
 
     last_face_time = 0
-    last_inference = 0
-    INFERENCE_INTERVAL = 0.7
+    last_gaze_inference = 0
+    last_face_inference = 0
+    GAZE_INFERENCE_INTERVAL = 0.5
+    FACE_INFERENCE_INTERVAL = 0.8
     multi_face_counter = 0
     
     global yolo_model
@@ -162,30 +169,32 @@ async def proctor_ws(websocket: WebSocket):
             img = Image.open(io.BytesIO(img_bytes)).convert("RGB")
 
             now = time.time()
-            if now - last_inference < INFERENCE_INTERVAL:
-                continue
-            last_inference = now
-
-            # Detect faces
-            boxes = detect_faces(yolo_model, img, box_format='xywh', th=0.4)
-            face_count = len(boxes)
-
-            if face_count > 0:
-                last_face_time = time.time()
-
-            absence_seconds = time.time() - last_face_time
+            if now - last_gaze_inference >= GAZE_INFERENCE_INTERVAL:
+                #Detect gaze
+                relative_yaw, sclera, side, gaze_state, state["suspicion_score"], state["warning_count"] = detect_gaze(img, state)
+                print("Detect gaze works")
+                last_gaze_inference = now
             
-            if face_count > 1:
-                multi_face_counter += 1
-            else:
-                multi_face_counter = 0
+            if now - last_face_inference >= FACE_INFERENCE_INTERVAL:
+                # Detect faces
+                boxes = detect_faces(yolo_model, img, box_format='xywh', th=0.4)
+                face_count = len(boxes)
+
+                if face_count > 0:
+                    last_face_time = time.time()
+
+                absence_seconds = time.time() - last_face_time
                 
-            print("Detect faces works")
+                if face_count > 1:
+                    multi_face_counter += 1
+                else:
+                    multi_face_counter = 0
+                    
+                print("Detect faces works")
+                
+                last_face_inference = now
 
-            #Detect gaze
-            relative_yaw, sclera, side, gaze_state, state["suspicion_score"], state["warning_count"] = detect_gaze(img, state)
-            print("Detect gaze works")
-
+            
             await websocket.send_json({
                 "faces_detected": face_count,
                 "multiple_faces": face_count > 1,

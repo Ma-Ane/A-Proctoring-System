@@ -311,7 +311,7 @@ def detect_gaze(img, state):
             state["warning_count"] += 1
             state["suspicion_score"] *= 0.3
             
-        if sclera > 0:
+        if sclera > 0.25:
             side = "RIGHT"
         elif sclera < 0:
             side = "LEFT"
@@ -321,7 +321,7 @@ def detect_gaze(img, state):
         print(
             f"Yaw={relative_yaw:6.1f} | "
             f"Sclera={sclera:+.3f} | "
-            f"SIDE:", "RIGHT | " if sclera > 0 else "LEFT | "
+            f"SIDE:={side} | "
             f"Vert={vertical_state:11s} | "
             f"Gaze={gaze_state:10s} | "
             f"Score={state['suspicion_score']:.2f} | "

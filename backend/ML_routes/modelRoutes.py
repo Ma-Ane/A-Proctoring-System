@@ -5,6 +5,7 @@ from PIL import Image
 import io, base64, json, time, os
 import numpy as np
 from dotenv import load_dotenv
+from bson import ObjectId
 
 
 # Custom file 
@@ -28,7 +29,7 @@ load_dotenv()
 # Mongo DB connection
 MONGO_URL = os.getenv("MONGO_URL")
 client = MongoClient(MONGO_URL)
-db = client.get_database('proctoring_system')
+db = client.get_database('test')
 flags_collection = db["flags"]  # collection for storing flags
 
 
@@ -249,8 +250,8 @@ async def proctor_ws(websocket: WebSocket, exam_id: str = Query(...), user_id: s
                 img_base64 = base64.b64encode(img_buffer.getvalue()).decode("utf-8")
 
                 flag_doc = {
-                    "exam_id": exam_id,
-                    "user_id": user_id,
+                    "examId": ObjectId(exam_id),
+                    "userId": ObjectId(user_id),
                     "timestamp": time.time(),
                     "status": status,
                     "screenshot": img_base64,

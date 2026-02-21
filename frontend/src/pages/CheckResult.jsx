@@ -9,6 +9,11 @@ export default function CheckResult() {
   const [selectedExamResults, setSelectedExamResults] = useState([]);
   const [loadingResults, setLoadingResults] = useState(false);
 
+  // for the violations of the student for each subject 
+  const [selectedStudent, setSelectedStudent] = useState(null);
+  const [studentViolations, setStudentViolations] = useState([]);
+  const [loadingViolations, setLoadingViolations] = useState(false);
+
   // ---------------- FETCH EXAMS CREATED BY TEACHER ----------------
   const getExamCreated = async () => {
     try {
@@ -123,6 +128,30 @@ export default function CheckResult() {
     }
   };
 
+  // fetch the violations from the db for that user of the particular exam
+  // ---------------- FETCH VIOLATIONS ----------------
+  const fetchViolations = async (userId, examId) => {
+    try {
+      setLoadingViolations(true);
+      const response = await fetch(
+        `http://localhost:3000/flag/get_student_violations/${encodeURIComponent(examId)}/${encodeURIComponent(userId)}`
+      );
+
+      if (!response.ok) {
+        setStudentViolations([]);
+        return;
+      }
+
+      const data = await response.json();
+      setStudentViolations(data.violations || []);
+    } catch (error) {
+      console.error(error);
+      setStudentViolations([]);
+    } finally {
+      setLoadingViolations(false);
+    }
+  };
+
   return (
     <div className="max-w-6xl mx-auto p-6">
       <h1 className="mt-5 text-2xl lg:text-4xl font-bold text-center mb-16">
@@ -180,17 +209,55 @@ export default function CheckResult() {
             <>
               <div className="space-y-3">
                 {selectedExamResults.map((result) => (
-                  <div
-                    key={result._id}
-                    className={`flex justify-between items-center border rounded-md p-4 ${
-                      result.score > 0.5 ? "bg-green-200" : "bg-red-200"
-                    }`}
-                  >
-                    <span className="font-medium">{result.name}</span>
+                  <div key={result._id} className="border rounded-md p-4 mb-2">
+                    <div
+                      className={`flex p-2 justify-between items-center cursor-pointer ${
+                        result.score > 0.5 ? "bg-green-200" : "bg-red-200"
+                      }`}
+                      onClick={() => {
+                        setSelectedStudent(result.userId);
+                        
+                        // call the API to fetch the violations from db
+                        fetchViolations(result.userId, examId); 
+                      }}
+                    >
+                      <span className="font-medium">{result.name}</span>
 
-                    <span className="text-sm bg-gray-100 px-3 py-1 rounded">
-                      Score: {result.score}
-                    </span>
+                      <span className="text-sm bg-gray-100 px-3 py-1 rounded">
+                        Score: {result.score}
+                      </span>
+                    </div>
+
+                    {/* ---------------- Student Violations Section ---------------- */}
+                    {selectedStudent === result.userId && (
+                      <div className="mt-2 p-2 border-t border-gray-300 bg-gray-50">
+                        {loadingViolations ? (
+                          <p>Loading violations...</p>
+                        ) : studentViolations.length === 0 ? (
+                          <p className="text-gray-600 text-sm">No violations for this student.</p>
+                        ) : (
+                          <ul className="list-disc list-inside text-sm space-y-2">
+                            {studentViolations.map((violation, index) => (
+                              <li key={index} className="border p-2 rounded bg-red-50">
+                                <p>
+                                  <span className="font-semibold">
+                                    {new Date(violation.timestamp * 1000).toLocaleString()}:
+                                  </span>{" "}
+                                  {violation.violation}
+                                </p>
+                                {violation.screenshot && (
+                                  <img
+                                    src={`data:image/jpeg;base64,${violation.screenshot}`}
+                                    alt="Violation Screenshot"
+                                    className="mt-1 max-w-xs border rounded"
+                                  />
+                                )}
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>

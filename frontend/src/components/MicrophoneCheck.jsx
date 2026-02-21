@@ -1,6 +1,13 @@
 import React, { useEffect, useRef } from "react";
 
 const MicrophoneCheck = ({ micVerified, setMicVerified, setIsMicAvailable }) => {
+
+  navigator.permissions.query({ name: "microphone" })
+  .then((status) => {
+    console.log("Microphone permission status:", status.state);
+    // status.state can be 'granted', 'prompt', or 'denied'
+  });
+  
   const canvasRef = useRef(null);
   const animationRef = useRef(null);
   const audioCtxRef = useRef(null);

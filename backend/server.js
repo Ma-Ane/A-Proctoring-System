@@ -42,6 +42,10 @@ app.use(express.json());
   const resultRoutes = require('./routes/resultRoutes');
   app.use('/result', resultRoutes);
 
+  // flags route
+  const flagRoutes = require('./routes/flagRoutes');
+  app.use('/flag', flagRoutes);
+
 
 // Test route
 app.get("/", (req, res) => {

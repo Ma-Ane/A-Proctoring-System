@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useParams, useLocation } from "react-router-dom";
 
-const WS_URL = "ws://127.0.0.1:8000/ws/proctor";
+const WS_BASE_URL = `ws://127.0.0.1:8000/ws/proctor`;
 
 export default function StartExam() {
 
@@ -139,21 +139,40 @@ export default function StartExam() {
 
     // WebSocket connection
     useEffect(() => {
-        const ws = new WebSocket(WS_URL);
+        if (!examId || !userId) {
+            console.error("Missing examId or userId for WebSocket connection");
+            return;
+        }
+
+        const wsUrl = `${WS_BASE_URL}?exam_id=${encodeURIComponent(examId)}&user_id=${encodeURIComponent(userId)}`;
+
+        const ws = new WebSocket(wsUrl);
         wsRef.current = ws;
 
-        ws.onopen = () => console.log("WebSocket connected");
+        ws.onopen = () => {
+            console.log("WebSocket connected");
+            console.log("Connected with:", { examId, userId });
+        };
 
         ws.onmessage = (event) => {
             const data = JSON.parse(event.data);
             setStatus(data);
         };
 
-        ws.onerror = (err) => console.error("WebSocket error:", err);
-        ws.onclose = () => console.log("WebSocket closed");
+        ws.onerror = (err) => {
+            console.error("WebSocket error:", err);
+        };
 
-        return () => ws.close();
-    }, []);
+        ws.onclose = () => {
+            console.log("WebSocket closed");
+        };
+
+        return () => {
+            if (ws.readyState === WebSocket.OPEN) {
+                ws.close();
+            }
+        };
+    }, [examId, userId]);
 
     // Send frames
     useEffect(() => {

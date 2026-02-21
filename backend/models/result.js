@@ -9,6 +9,7 @@ const resultSchema = new mongoose.Schema({
     examId: {
         type: mongoose.Schema.Types.ObjectId,
         required: true,
+        ref: 'exam'
     },
     userId: {
         type: mongoose.Schema.Types.ObjectId,

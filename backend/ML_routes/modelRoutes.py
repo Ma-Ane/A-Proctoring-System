@@ -1,13 +1,11 @@
-from fastapi import FastAPI, UploadFile, File, HTTPException, Form, WebSocket
+from fastapi import FastAPI, UploadFile, File, HTTPException, Form, WebSocket, Query
 from fastapi.middleware.cors import CORSMiddleware
+from pymongo import MongoClient
 from PIL import Image
-import io
-import base64
-from pydantic import BaseModel
-from io import BytesIO
-import json
+import io, base64, json, time, os
 import numpy as np
-import time
+from dotenv import load_dotenv
+
 
 # Custom file 
 from backend.ML_helper_function.faceVerification import load_face_verification_model, get_embedding, cosine_similarity
@@ -16,6 +14,7 @@ from backend.ML_helper_function.gazeDetection import detect_gaze
 
 app = FastAPI()
 
+# CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  
@@ -24,7 +23,16 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+load_dotenv()
 
+# Mongo DB connection
+MONGO_URL = os.getenv("MONGO_URL")
+client = MongoClient(MONGO_URL)
+db = client.get_database('proctoring_system')
+flags_collection = db["flags"]  # collection for storing flags
+
+
+# Root
 @app.get('/')
 def root():
     print('FastAPI is running')
@@ -33,7 +41,14 @@ model = None
 yolo_model = None
 
 
-### --------------- Face Verification ---------------
+# to check the mongo db connection for saving flags
+@app.on_event("startup")
+def check_mongo_connection():
+    try:
+        client.admin.command("ping")
+        print("MongoDB Atlas connected ✅")
+    except Exception as e:
+        print("MongoDB Atlas connection failed ❌", e)
 
 # function to load the model
 @app.on_event("startup") # function to load the model 
@@ -125,7 +140,7 @@ async def check_verification(user_image_embedding: str = Form(...), webcam_image
         return {"error": str(e)}
     
 @app.websocket("/ws/proctor")
-async def proctor_ws(websocket: WebSocket):
+async def proctor_ws(websocket: WebSocket, exam_id: str = Query(...), user_id: str = Query(...)):
     await websocket.accept()
     print("🟢 Client connected")
     
@@ -158,7 +173,6 @@ async def proctor_ws(websocket: WebSocket):
     try:
         while True:
             data = await websocket.receive_text()
-            
             print("Data fetched in websocket try module")
             
             # Ignore empty frames
@@ -194,8 +208,7 @@ async def proctor_ws(websocket: WebSocket):
                 
                 last_face_inference = now
 
-            
-            await websocket.send_json({
+            status = {
                 "faces_detected": face_count,
                 "multiple_faces": face_count > 1,
                 "multi_face_violation": multi_face_counter >= 3,
@@ -208,7 +221,44 @@ async def proctor_ws(websocket: WebSocket):
                 "gaze_state": gaze_state,
                 "suspicion_score": state["suspicion_score"],
                 "warning_count": state["warning_count"]
-            })
+            }
+            
+            await websocket.send_json(status)
+
+            # Store violations in mongodb
+            if status["multi_face_violation"] or status["no_face"] or status["absent"]:
+                # Determine violation message
+                violations = []
+                if status["multi_face_violation"]:
+                    violations.append("Multiple faces detected")
+                if status["no_face"]:
+                    violations.append("No face detected")
+                if status["absent"]:
+                    violations.append("Student absent")
+                # Optional: add gaze-based violations
+                if gaze_state != "ON_SCREEN":
+                    violations.append(f"Gaze off screen ({gaze_state})")
+                if abs(relative_yaw) > 20:  # example threshold for head tilt
+                    violations.append("Head tilted")
+
+                violation_message = ", ".join(violations) if violations else "Unknown violation"
+                
+                # Convert image to base64 string for DB
+                img_buffer = io.BytesIO()
+                img.save(img_buffer, format="JPEG")
+                img_base64 = base64.b64encode(img_buffer.getvalue()).decode("utf-8")
+
+                flag_doc = {
+                    "exam_id": exam_id,
+                    "user_id": user_id,
+                    "timestamp": time.time(),
+                    "status": status,
+                    "screenshot": img_base64,
+                    "violation": violation_message
+                }
+
+                # Insert into MongoDB
+                flags_collection.insert_one(flag_doc)
 
     except Exception as e:
         # await websocket.close(code=1011, reason=str(e))

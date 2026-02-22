@@ -14,6 +14,8 @@ export default function CheckResult() {
   const [studentViolations, setStudentViolations] = useState([]);
   const [loadingViolations, setLoadingViolations] = useState(false);
 
+  const [selectedStudentName, setSelectedStudentName] = useState("");
+
   // ---------------- FETCH EXAMS CREATED BY TEACHER ----------------
   const getExamCreated = async () => {
     try {
@@ -117,22 +119,24 @@ export default function CheckResult() {
     }
   }, [examId]);
 
-  // to calculate the scores of all studets for that exam
-  const handleCalculateScore = async(req, res) => {
+  // to calculate the scores of all students for that exam
+  const handleCalculateScore = async () => {
     try {
-      const response = await fetch(`http://localhost:3000/result/calculate_score/${encodeURIComponent(examId)}`);
-
-      const data = response.json();
-    } catch (error) { 
+      await fetch(
+        `http://localhost:3000/result/calculate_score/${encodeURIComponent(examId)}`
+      );
+    } catch (error) {
       console.log(error);
     }
   };
 
-  // fetch the violations from the db for that user of the particular exam
   // ---------------- FETCH VIOLATIONS ----------------
-  const fetchViolations = async (userId, examId) => {
+  const fetchViolations = async (userId, examId, name) => {
     try {
       setLoadingViolations(true);
+      setSelectedStudent(userId);
+      setSelectedStudentName(name);
+
       const response = await fetch(
         `http://localhost:3000/flag/get_student_violations/${encodeURIComponent(examId)}/${encodeURIComponent(userId)}`
       );
@@ -152,8 +156,38 @@ export default function CheckResult() {
     }
   };
 
+  // ---------------- CLOSE MODAL ----------------
+  const closeModal = () => {
+    setSelectedStudent(null);
+    setStudentViolations([]);
+  };
+
+  // --------- to delete any violations by teacher 
+  const handleDeleteViolation = async (violationId) => {
+    try {
+      // Call backend API (we will build it later)
+      const response = await fetch(
+        `http://localhost:3000/flag/delete_violation/${violationId}`,
+        { method: "DELETE" }
+      );
+
+      if (!response.ok) {
+        console.error("Failed to delete violation");
+        return;
+      }
+
+      // Optimistic UI update (remove from state)
+      setStudentViolations((prev) =>
+        prev.filter((v) => v._id !== violationId)
+      );
+
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   return (
-    <div className="max-w-6xl mx-auto p-6">
+    <div className="max-w-6xl mx-auto p-6 relative">
       <h1 className="mt-5 text-2xl lg:text-4xl font-bold text-center mb-16">
         Results
       </h1>
@@ -209,17 +243,14 @@ export default function CheckResult() {
             <>
               <div className="space-y-3">
                 {selectedExamResults.map((result) => (
-                  <div key={result._id} className="border rounded-md p-4 mb-2">
+                  <div key={result._id} className="border rounded-md mt-6">
                     <div
-                      className={`flex p-2 justify-between items-center cursor-pointer ${
+                      className={`flex p-4 justify-between items-center cursor-pointer hover:scale-105 transition-all rounded-xl ${
                         result.score > 0.5 ? "bg-green-200" : "bg-red-200"
                       }`}
-                      onClick={() => {
-                        setSelectedStudent(result.userId);
-                        
-                        // call the API to fetch the violations from db
-                        fetchViolations(result.userId, examId); 
-                      }}
+                      onClick={() =>
+                        fetchViolations(result.userId, examId, result.name)
+                      }
                     >
                       <span className="font-medium">{result.name}</span>
 
@@ -227,44 +258,13 @@ export default function CheckResult() {
                         Score: {result.score}
                       </span>
                     </div>
-
-                    {/* ---------------- Student Violations Section ---------------- */}
-                    {selectedStudent === result.userId && (
-                      <div className="mt-2 p-2 border-t border-gray-300 bg-gray-50">
-                        {loadingViolations ? (
-                          <p>Loading violations...</p>
-                        ) : studentViolations.length === 0 ? (
-                          <p className="text-gray-600 text-sm">No violations for this student.</p>
-                        ) : (
-                          <ul className="list-disc list-inside text-sm space-y-2">
-                            {studentViolations.map((violation, index) => (
-                              <li key={index} className="border p-2 rounded bg-red-50">
-                                <p>
-                                  <span className="font-semibold">
-                                    {new Date(violation.timestamp * 1000).toLocaleString()}:
-                                  </span>{" "}
-                                  {violation.violation}
-                                </p>
-                                {violation.screenshot && (
-                                  <img
-                                    src={`data:image/jpeg;base64,${violation.screenshot}`}
-                                    alt="Violation Screenshot"
-                                    className="mt-1 max-w-xs border rounded"
-                                  />
-                                )}
-                              </li>
-                            ))}
-                          </ul>
-                        )}
-                      </div>
-                    )}
                   </div>
                 ))}
               </div>
 
               {/* Only show calculate score button if results exist */}
               <div className="flex w-full justify-end">
-                <button 
+                <button
                   className="button rounded-lg px-3 py-2 mt-8"
                   onClick={handleCalculateScore}
                 >
@@ -273,6 +273,72 @@ export default function CheckResult() {
               </div>
             </>
           )}
+        </div>
+      )}
+
+      {/* Violations for each user in full screeen*/}
+      {selectedStudent && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center z-50"
+          onClick={closeModal}
+        >
+          <div
+            className="bg-white w-[90%] h-[85%] rounded-xl shadow-2xl p-6 overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="text-2xl font-bold mb-6 text-center">
+              Violations - {selectedStudentName}
+            </h2>
+
+            {loadingViolations ? (
+              <p className="text-center">Loading violations...</p>
+            ) : studentViolations.length === 0 ? (
+              <p className="text-center text-gray-600">
+                No violations recorded.
+              </p>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {studentViolations.map((violation, index) => (
+                  <div
+                    key={index}
+                    className="relative group border rounded-xl p-4 shadow-md hover:shadow-2xl transition"
+                  >
+
+                    {/* delete button for removing the violations  */}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteViolation(violation._id);
+                      }}
+                      className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition bg-red-600 text-white text-lg px-2 py-1 rounded hover:bg-red-700"
+                    >
+                      <i className="ri-delete-bin-line"></i>
+                    </button>
+                    
+                    {/* date and time of violations  */}
+                    <p className="font-semibold mb-2">
+                      {new Date(
+                        violation.timestamp * 1000
+                      ).toLocaleString()}
+                    </p>
+
+                    <p className="text-red-600 mb-3 text-lg">
+                      {violation.violation}
+                    </p>
+
+                    {/* violations image  */}
+                    {violation.screenshot && (
+                      <img
+                        src={`data:image/jpeg;base64,${violation.screenshot}`}
+                        alt="Violation Screenshot"
+                        className="w-full rounded-md border"
+                      />
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>

@@ -122,9 +122,9 @@ export default function CheckResult() {
   // to calculate the scores of all students for that exam
   const handleCalculateScore = async () => {
     try {
-      await fetch(
-        `http://localhost:3000/result/calculate_score/${encodeURIComponent(examId)}`
-      );
+      await fetch(`http://localhost:3000/result/calculate_score/${encodeURIComponent(examId)}`,{
+        method: "POST"
+      });
     } catch (error) {
       console.log(error);
     }

@@ -128,6 +128,7 @@ async def check_verification(user_image_embedding: str = Form(...), webcam_image
             similarity = cosine_similarity(emb1, user_embedding)
             print(f"\nCosine Similarity: {similarity:.4f}")
             threshold = 0.146     # from LFW dataset
+            threshold = 0.0146     # from LFW dataset
 
             if similarity >= threshold:
                 return {"message": "Same person"}
@@ -145,11 +146,7 @@ async def proctor_ws(websocket: WebSocket, exam_id: str = Query(...), user_id: s
     await websocket.accept()
     print("🟢 Client connected")
     
-    relative_yaw = 0.0
-    sclera = 0.0
-    side = "STRAIGHT"
-    gaze_state = "ON_SCREEN"
-    
+    # Initialize state
     state = {
         "warning_count": 0,
         "suspicion_score": 0.0,
@@ -162,6 +159,9 @@ async def proctor_ws(websocket: WebSocket, exam_id: str = Query(...), user_id: s
     last_face_time = 0
     last_gaze_inference = 0
     last_face_inference = 0
+    last_violation_time = 0
+    VIOLATION_COOLDOWN = 3  # seconds to avoid saving duplicate violations rapidly
+
     GAZE_INFERENCE_INTERVAL = 0.5
     FACE_INFERENCE_INTERVAL = 0.8
     multi_face_counter = 0
@@ -174,24 +174,22 @@ async def proctor_ws(websocket: WebSocket, exam_id: str = Query(...), user_id: s
     try:
         while True:
             data = await websocket.receive_text()
-            print("Data fetched in websocket try module")
             
-            # Ignore empty frames
             if not data or len(data) < 100:
                 continue
-            
+
             img_bytes = base64.b64decode(data)
             img = Image.open(io.BytesIO(img_bytes)).convert("RGB")
 
             now = time.time()
+
+            # --- Gaze detection ---
             if now - last_gaze_inference >= GAZE_INFERENCE_INTERVAL:
-                #Detect gaze
                 relative_yaw, sclera, side, gaze_state, state["suspicion_score"], state["warning_count"] = detect_gaze(img, state)
-                print("Detect gaze works")
                 last_gaze_inference = now
-            
+
+            # --- Face detection ---
             if now - last_face_inference >= FACE_INFERENCE_INTERVAL:
-                # Detect faces
                 boxes = detect_faces(yolo_model, img, box_format='xywh', th=0.4)
                 face_count = len(boxes)
 
@@ -199,14 +197,12 @@ async def proctor_ws(websocket: WebSocket, exam_id: str = Query(...), user_id: s
                     last_face_time = time.time()
 
                 absence_seconds = time.time() - last_face_time
-                
+
                 if face_count > 1:
                     multi_face_counter += 1
                 else:
                     multi_face_counter = 0
-                    
-                print("Detect faces works")
-                
+
                 last_face_inference = now
 
             status = {
@@ -223,44 +219,44 @@ async def proctor_ws(websocket: WebSocket, exam_id: str = Query(...), user_id: s
                 "suspicion_score": state["suspicion_score"],
                 "warning_count": state["warning_count"]
             }
-            
+
             await websocket.send_json(status)
 
-            # Store violations in mongodb
-            if status["multi_face_violation"] or status["no_face"] or status["absent"]:
-                # Determine violation message
-                violations = []
-                if status["multi_face_violation"]:
-                    violations.append("Multiple faces detected")
-                if status["no_face"]:
-                    violations.append("No face detected")
-                if status["absent"]:
-                    violations.append("Student absent")
-                # Optional: add gaze-based violations
-                if gaze_state != "ON_SCREEN":
-                    violations.append(f"Gaze off screen ({gaze_state})")
-                if abs(relative_yaw) > 20:  # example threshold for head tilt
-                    violations.append("Head tilted")
+            # --- Save violations if needed ---
+            violations = []
+            if status["multi_face_violation"]:
+                violations.append("Multiple faces detected")
+            if status["no_face"]:
+                violations.append("No face detected")
+            if status["absent"]:
+                violations.append("Student absent")
+            if gaze_state != "ON_SCREEN":
+                violations.append(f"Gaze off screen ({gaze_state})")
+            if abs(relative_yaw) > 20:
+                violations.append("Head tilted")
 
-                violation_message = ", ".join(violations) if violations else "Unknown violation"
-                
-                # Convert image to base64 string for DB
-                img_buffer = io.BytesIO()
-                img.save(img_buffer, format="JPEG")
-                img_base64 = base64.b64encode(img_buffer.getvalue()).decode("utf-8")
+            if violations and (now - last_violation_time > VIOLATION_COOLDOWN):
+                try:
+                    # Convert image to base64
+                    img_buffer = io.BytesIO()
+                    img.save(img_buffer, format="JPEG")
+                    img_base64 = base64.b64encode(img_buffer.getvalue()).decode("utf-8")
 
-                flag_doc = {
-                    "examId": ObjectId(exam_id),
-                    "userId": ObjectId(user_id),
-                    "timestamp": time.time(),
-                    "status": status,
-                    "screenshot": img_base64,
-                    "violation": violation_message
-                }
+                    flag_doc = {
+                        "examId": ObjectId(exam_id),
+                        "userId": ObjectId(user_id),
+                        "timestamp": now,
+                        "status": status,
+                        "screenshot": img_base64,
+                        "violation": ", ".join(violations)
+                    }
 
-                # Insert into MongoDB
-                flags_collection.insert_one(flag_doc)
+                    flags_collection.insert_one(flag_doc)
+                    last_violation_time = now
+                    print(f"📝 Violation saved: {flag_doc['violation']}")
+                except Exception as e:
+                    print("⚠️ Failed to save violation:", e)
 
     except Exception as e:
-        # await websocket.close(code=1011, reason=str(e))
         print("🔴 Client disconnected:", e)
+        await websocket.close()

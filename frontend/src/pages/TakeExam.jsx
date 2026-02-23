@@ -244,7 +244,7 @@ const TakeExam = () => {
             }
 
             {
-                page === 3 && (
+                (page === 3 )&& (
                     <>
                         <MicrophoneCheck 
                             micVerified={micVerified} 

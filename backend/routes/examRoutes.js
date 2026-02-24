@@ -24,6 +24,7 @@ router.post('/', async (req, res) => {
   }
 });
 
+
 //////////// paaxi tala ko wala API use garnee.. maathi ko ignore in frontend as well
 // exam for each batch of students
 router.get('/get_exam_batch/:batch', async (req, res) => {
@@ -31,16 +32,25 @@ router.get('/get_exam_batch/:batch', async (req, res) => {
         const { batch } = req.params;
 
         // find the exam in the batch that is active
-        const data = await Exam.find({ batch: batch, isActive: true });
-        
-        if (data.length === 0) return res.status(404).json({error: "Exams not found."})
+        const exams = await Exam.find({ batch: batch, isActive: true });
+        if (exams.length === 0) return res.status(404).json({error: "Exams not found."})
+
+        // for each exam, fetch the creator's image
+        const examsWithImage = await Promise.all(exams.map(async exam => {
+            const user = await User.findById(exam.createdBy).select("image"); // only get image
+            return {
+                ...exam.toObject(),
+                image: user ? user.image : null
+            };
+        }));
 
         // returns a list of object 
-        res.status(200).json(data);
+        res.status(200).json(examsWithImage);
     } catch (error) {
         res.status(500).json({error: error.message});
     }
 });
+
 
 // exams in batch which is not attended
 router.get('/get_exam_batch/:batch/:userId', async (req, res) => {
@@ -59,7 +69,16 @@ router.get('/get_exam_batch/:batch/:userId', async (req, res) => {
             _id: { $nin: attendedExamIds }
         });
 
-        res.status(200).json(exams);
+        //For each exam, fetch the creator's image
+        const examsWithImage = await Promise.all(exams.map(async exam => {
+            const user = await User.findById(exam.createdBy).select("image"); // only get image field
+            return {
+                ...exam.toObject(),          // convert Mongoose doc to plain JS object
+                image: user ? user.image : null // add the creator image
+            };
+        }));
+
+        res.status(200).json(examsWithImage);
 
     } catch (error) {
         res.status(500).json({ error: error.message });

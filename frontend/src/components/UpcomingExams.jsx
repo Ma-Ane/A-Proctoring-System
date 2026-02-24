@@ -68,7 +68,12 @@ const UpcomingExams = () => {
                     <span className='flex-[2]'>{exam.date.split('T')[0]}</span>
 
                     {/* image milaunuu parxa  */}
-                    <span className='flex-[1]'><img src="logo.webp" alt="" className='size-6 rounded-full'/></span>
+                    <span className='flex-[1]'>
+                      <img 
+                        src={`http://localhost:3000/uploads/${exam.image}`} 
+                        alt="Profile Picture" 
+                        className='size-6 rounded-full'/>
+                    </span>
                 </li>
             ))
         }

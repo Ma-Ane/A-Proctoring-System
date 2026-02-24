@@ -4,6 +4,7 @@ const router = express.Router();
 
 const Exam = require('../models/exam');
 const User = require('../models/user');
+const Result = require('../models/result');
 
 // save the exam instance in the db
 router.post('/', async (req, res) => {
@@ -75,6 +76,33 @@ router.patch("/toggle_active_status/:examId", async (req, res) => {
     await foundExam.save();
 
     res.status(200).json({message: "Exam status updated successfully.", isActive: foundExam.isActive})
+  } catch (error) {
+    res.status(500).json({error: error.message});
+  }
+});
+
+
+// for portfolio section .... to see in which exams did the user appear in 
+router.get('/my_exams/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    // verify if the user exists
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({error: "User not found."});
+
+    // check if the user has given any exam
+    const results = await Result.find({ userId: userId});
+    if (!results || results.length === 0) 
+      return res.status(404).json({error: "Results not found."});
+
+    // extract exam ids
+    const examIds = results.map(r => r.examId);
+
+    // get exam details
+    const exams = await Exam.find({ _id: { $in: examIds }});
+
+    res.status(200).json(exams);
   } catch (error) {
     res.status(500).json({error: error.message});
   }

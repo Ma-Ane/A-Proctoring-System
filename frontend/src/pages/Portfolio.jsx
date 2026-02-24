@@ -13,12 +13,13 @@ const Portfolio = () => {
 
     // for chosing between attendance and personal details 
     const [isAttendance, setIsAttendance] = useState(true);
+
     const [userName, setuserName] = useState('');
     const [userImagePath, setImagePath] = useState('');
     const [userData, setuserData] = useState(null);
 
     // for attendance exam
-    const [examInBatch, setExamInBatch] = useState([]);
+    const [examAttended, setExamAttended] = useState([]);
 
     // for the exams for teacher 
     const [examForTeacher, setExamForTeacher] = useState([]);
@@ -53,12 +54,12 @@ const Portfolio = () => {
 
         const fetchExamInBatch = async () => {
             try {
-                const response = await fetch(`http://localhost:3000/api/exam/${encodeURIComponent(batch)}`);
+                const response = await fetch(`http://localhost:3000/api/exam/my_exams/${encodeURIComponent(userId)}`);
 
                 const data = await response.json();
 
-                setExamInBatch(data);
-                // console.log(data);
+                setExamAttended(data);
+                console.log(data);
             } catch (error) {
                 console.log("Error fetching exams", error);
             }
@@ -86,7 +87,7 @@ const Portfolio = () => {
         }
     };
 
-    // to load the exams for user or the func above
+    // to load the exams for user or the func above (teacher)
     useEffect(() => {
         if (role === 'Teacher') {
             getExamCreated();
@@ -159,7 +160,7 @@ const Portfolio = () => {
                         {
                             role === 'Student' ?
                                 /* for students to see which exams did they appear in  */
-                                examInBatch.map((exam, index) => (
+                                examAttended.map((exam, index) => (
                                     <li key={index} className='flex'>
                                         <span className='flex-[1]'>{index+1}</span>
                                         <span className='flex-[5]'>{exam.title}</span>

@@ -24,21 +24,45 @@ router.post('/', async (req, res) => {
   }
 });
 
-
+//////////// paaxi tala ko wala API use garnee.. maathi ko ignore in frontend as well
 // exam for each batch of students
-router.get('/:batch', async (req, res) => {
+router.get('/get_exam_batch/:batch', async (req, res) => {
     try {
         const { batch } = req.params;
 
         // find the exam in the batch that is active
         const data = await Exam.find({ batch: batch, isActive: true });
         
-        if (!data) throw new Error("No exams found");
+        if (data.length === 0) return res.status(404).json({error: "Exams not found."})
 
         // returns a list of object 
         res.status(200).json(data);
     } catch (error) {
         res.status(500).json({error: error.message});
+    }
+});
+
+// exams in batch which is not attended
+router.get('/get_exam_batch/:batch/:userId', async (req, res) => {
+    try {
+        const { batch, userId } = req.params;
+
+        // examIds already attempted
+        const results = await Result.find({ userId: userId }).select("examId");
+
+        const attendedExamIds = results.map(r => r.examId);
+
+        // Fetch only exams NOT in attended list
+        const exams = await Exam.find({
+            batch: batch,
+            isActive: true,
+            _id: { $nin: attendedExamIds }
+        });
+
+        res.status(200).json(exams);
+
+    } catch (error) {
+        res.status(500).json({ error: error.message });
     }
 });
 
@@ -91,13 +115,19 @@ router.get('/my_exams/:userId', async (req, res) => {
     const user = await User.findById(userId);
     if (!user) return res.status(404).json({error: "User not found."});
 
+    // convert userId to ObjectId
+    const objectUserId = new mongoose.Types.ObjectId(userId);
+
     // check if the user has given any exam
-    const results = await Result.find({ userId: userId});
+    const results = await Result.find({ userId: objectUserId });
     if (!results || results.length === 0) 
       return res.status(404).json({error: "Results not found."});
 
     // extract exam ids
     const examIds = results.map(r => r.examId);
+
+    // convert examIds to ObjectId if needed (usually already ObjectId)
+    // const objectExamIds = examIds.map(id => mongoose.Types.ObjectId(id));
 
     // get exam details
     const exams = await Exam.find({ _id: { $in: examIds }});
@@ -107,6 +137,5 @@ router.get('/my_exams/:userId', async (req, res) => {
     res.status(500).json({error: error.message});
   }
 });
-
 
 module.exports = router;

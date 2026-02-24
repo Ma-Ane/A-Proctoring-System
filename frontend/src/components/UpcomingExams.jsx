@@ -8,6 +8,7 @@ const UpcomingExams = () => {
 
   // for now we are fetching exams only for BCT batch
   const batch = "BCT";
+  const userId = localStorage.getItem("userId");
 
   // for kati oota upcoming exam teskoo lagiiii
   const [upcomingExam, setUpcomingExam] = useState([]);
@@ -16,7 +17,10 @@ const UpcomingExams = () => {
   useEffect(() => {
     const fetchUpcomingExam = async () => {
       try {
-        const res = await fetch(`http://localhost:3000/api/exam/${encodeURIComponent(batch)}`);
+
+        // below onee forr not showing the attended exam in upcoming Exam
+        const res = await fetch(`http://localhost:3000/api/exam/get_exam_batch/${encodeURIComponent(batch)}`);
+        // const res = await fetch(`http://localhost:3000/api/exam/get_exam_batch/${encodeURIComponent(batch)}/${encodeURIComponent(userId)}`);
 
         const data = await res.json();
 

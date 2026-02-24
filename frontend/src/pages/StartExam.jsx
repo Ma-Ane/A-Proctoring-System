@@ -23,7 +23,8 @@ export default function StartExam() {
     const [currentIndex, setCurrentIndex] = useState(0);
     const [answers, setAnswers] = useState([]);
     const [selectedOption, setSelectedOption] = useState(null);
-    const [violations, setViolations] = useState("");
+    const [mlViolation, setMlViolation] = useState("");
+    const [tabViolation, setTabViolation] = useState("");
     const [questions, setQuestions] = useState([]);
     const [submitted, setSubmitted] = useState(null);
 
@@ -43,35 +44,6 @@ export default function StartExam() {
         warning_count: 0
     });
 
-    // -------------------- VIOLATION IMAGE CAPTURE --------------------
-    const captureViolationImage = async (type) => {
-        const video = videoRef.current;
-        const canvas = canvasRef.current;
-        if (!video || !canvas) return;
-
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        const ctx = canvas.getContext("2d");
-        ctx.drawImage(video, 0, 0);
-        const base64 = canvas.toDataURL("image/jpeg", 0.8);
-
-        try {
-            // Reuse your existing backend save mechanism
-            await fetch("http://localhost:3000/result/save_violation", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    examId,
-                    userId,
-                    violation_type: type,
-                    image: base64
-                })
-            });
-            console.log("Violation saved:", type);
-        } catch (error) {
-            console.error("Violation save error:", error);
-        }
-    };
 
     // -------------------- FULLSCREEN FUNCTIONS --------------------
     function enterFullScreen() {
@@ -129,13 +101,39 @@ export default function StartExam() {
 
     // -------------------- TAB / WINDOW FOCUS --------------------
     useEffect(() => {
+        let hiddenStart = null;
+
         const handleVisibilityChange = () => {
-            if (document.hidden) setViolations("User switched away from exam tab/window");
+            const ws = wsRef.current;
+            if (!ws || ws.readyState !== 1) return;
+
+            if (document.hidden) {
+                hiddenStart = Date.now();
+
+                ws.send(JSON.stringify({
+                    type: "TAB_SWITCH",
+                    state: "HIDDEN"
+                }));
+
+                setTabViolation("User switched away from exam tab");
+            } else {
+                if (hiddenStart) {
+                    const duration = (Date.now() - hiddenStart) / 1000;
+
+                    ws.send(JSON.stringify({
+                        type: "TAB_SWITCH",
+                        state: "VISIBLE",
+                        duration: duration
+                    }));
+
+                    hiddenStart = null;
+                }
+            }
         };
-        window.addEventListener("blur", handleVisibilityChange);
+
         document.addEventListener("visibilitychange", handleVisibilityChange);
+
         return () => {
-            window.removeEventListener("blur", handleVisibilityChange);
             document.removeEventListener("visibilitychange", handleVisibilityChange);
         };
     }, []);
@@ -223,7 +221,7 @@ export default function StartExam() {
             { type: "No face detected", condition: status.no_face },
             { type: "Candidate absent", condition: status.absent },
             { type: `Gaze off screen (${status.gaze_side})`, condition: status.gaze_side !== "STRAIGHT" },
-            { type: "Head tilted", condition: Math.abs(status.yaw) > 20 }
+            // { type: "Head tilted", condition: Math.abs(status.yaw) > 20 }
         ];
 
         for (const v of violationsToCheck) {
@@ -231,7 +229,7 @@ export default function StartExam() {
                 const lastSaved = violationCooldownRef.current[v.type] || 0;
                 if (now - lastSaved >= COOLDOWN_MS) {
                     violationCooldownRef.current[v.type] = now;
-                    setViolations(v.type);
+                    setMlViolation(v.type);
                     // captureViolationImage(v.type);
                     console.log("Violation detected and saved:", v.type);
                     break;
@@ -242,8 +240,8 @@ export default function StartExam() {
         // reset violations if none present
         if (!status.multi_face_violation && !status.no_face && !status.absent &&
             status.gaze_side === "STRAIGHT" && Math.abs(status.yaw) <= 20) {
-            if (violations !== "") {
-                setViolations("");
+            if (mlViolation !== "") {
+                setMlViolation("");
                 console.log("Violations cleared.");
             }
         }
@@ -302,7 +300,15 @@ export default function StartExam() {
                     <p>Suspicion score: {status.suspicion_score}</p>
                     <p>Warning count: {status.warning_count}</p>
                 </div>
-                {violations && <div className="bg-red-500 p-2 mt-10 text-lg rounded-xl text-white">{violations}</div>}
+
+                {/* violations in the UI */}
+                {
+                    (mlViolation || tabViolation) && (
+                        <div className="bg-red-500 p-2 mt-10 text-lg rounded-xl text-white">
+                            {tabViolation || mlViolation}
+                        </div>
+                    )
+                    }
             </div>
 
             {/* SUBMITTED MESSAGE */}

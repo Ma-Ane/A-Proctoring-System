@@ -6,6 +6,7 @@ import io, base64, json, time, os
 import numpy as np
 from dotenv import load_dotenv
 from bson import ObjectId
+import json
 
 
 # Custom file 
@@ -175,8 +176,39 @@ async def proctor_ws(websocket: WebSocket, exam_id: str = Query(...), user_id: s
         while True:
             data = await websocket.receive_text()
             
-            if not data or len(data) < 100:
+            if not data:
                 continue
+
+            # try to parse as JSON 
+            try:
+                message = json.loads(data)
+
+                if message.get("type") == "TAB_SWITCH":
+                    now = time.time()
+
+                    flag_doc = {
+                        "examId": ObjectId(exam_id),
+                        "userId": ObjectId(user_id),
+                        "timestamp": now,
+                        "violation": "Tab switched",
+                        "metadata": {
+                            "state": message.get("state", "unknown"),
+                            "duration": message.get("duration", None)
+                        }
+                    }
+
+                    flags_collection.insert_one(flag_doc)
+                    print("📝 Tab switch violation saved")
+
+                    continue  # Skip frame processing
+            except json.JSONDecodeError:
+                # Not JSON → it's an image frame
+                pass
+
+
+            # process as image frame
+            if len(data) < 100:
+                continue 
 
             img_bytes = base64.b64decode(data)
             img = Image.open(io.BytesIO(img_bytes)).convert("RGB")
@@ -223,17 +255,20 @@ async def proctor_ws(websocket: WebSocket, exam_id: str = Query(...), user_id: s
             await websocket.send_json(status)
 
             # --- Save violations if needed ---
-            violations = []
+            violations = None
+
             if status["multi_face_violation"]:
-                violations.append("Multiple faces detected")
-            if status["no_face"]:
-                violations.append("No face detected")
-            if status["absent"]:
-                violations.append("Student absent")
-            if gaze_state != "ON_SCREEN":
-                violations.append(f"Gaze off screen ({gaze_state})")
-            if abs(relative_yaw) > 20:
-                violations.append("Head tilted")
+                violations = "Multiple faces detected"
+
+            elif status["no_face"]:
+                violations = "No face detected"
+
+            elif status["absent"]:
+                violations = "Student absent"
+
+            elif status["faces_detected"] == 1 and gaze_state != "ON_SCREEN":
+                violations = f"Gaze off screen ({gaze_state})"
+
 
             if violations and (now - last_violation_time > VIOLATION_COOLDOWN):
                 try:
@@ -248,7 +283,7 @@ async def proctor_ws(websocket: WebSocket, exam_id: str = Query(...), user_id: s
                         "timestamp": now,
                         "status": status,
                         "screenshot": img_base64,
-                        "violation": ", ".join(violations)
+                        "violation": violations
                     }
 
                     flags_collection.insert_one(flag_doc)
@@ -259,4 +294,4 @@ async def proctor_ws(websocket: WebSocket, exam_id: str = Query(...), user_id: s
 
     except Exception as e:
         print("🔴 Client disconnected:", e)
-        await websocket.close()
+        # await websocket.close()

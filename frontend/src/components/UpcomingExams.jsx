@@ -9,6 +9,7 @@ const UpcomingExams = () => {
   // for now we are fetching exams only for BCT batch
   const batch = "BCT";
   const userId = localStorage.getItem("userId");
+  const role = localStorage.getItem("role");
 
   // for kati oota upcoming exam teskoo lagiiii
   const [upcomingExam, setUpcomingExam] = useState([]);
@@ -48,13 +49,20 @@ const UpcomingExams = () => {
                     <span className='flex-[1]'>{index+1}</span>
 
                     <span className='flex-[4]'>
-                      <Link to={`/take-exam/${exam._id}?title=${encodeURIComponent(exam.title)}`}>
-                        <p 
-                          className='hover:cursor-pointer w-fit'
-                        >
-                            {exam.title}
-                        </p>
-                      </Link>
+                      {/* enter into exam only if student  */}
+                      {
+                        role === "Teacher" ? (
+                          <p className="w-fit">{exam.title}</p>
+                        ) : (
+                          <Link
+                            to={`/take-exam/${exam._id}?title=${encodeURIComponent(exam.title)}`}
+                          >
+                            <p className="hover:cursor-pointer w-fit">
+                              {exam.title}
+                            </p>
+                          </Link>
+                        )
+                      }
                     </span>
 
                     <span className='flex-[2] text-base'>

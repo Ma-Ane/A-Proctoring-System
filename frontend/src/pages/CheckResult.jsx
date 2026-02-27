@@ -9,6 +9,9 @@ export default function CheckResult() {
   const [selectedExamResults, setSelectedExamResults] = useState([]);
   const [loadingResults, setLoadingResults] = useState(false);
 
+  // to check if any ungraded result is present
+  const [isUngraded, setIsUngraded] = useState(false);
+
   // for the violations of the student for each subject 
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [studentViolations, setStudentViolations] = useState([]);
@@ -32,7 +35,7 @@ export default function CheckResult() {
     }
   };
 
-  // ---------------- FETCH ATTEMPT COUNT PER EXAM ----------------
+  // fetch how many students have appeared for the exam
   const getAttemptCount = async (examId) => {
     try {
       const response = await fetch(
@@ -97,6 +100,7 @@ export default function CheckResult() {
   };
 
   // ---------------- EFFECTS ----------------
+  // for teacher to fetch the exam
   useEffect(() => {
     getExamCreated();
   }, []);
@@ -119,12 +123,41 @@ export default function CheckResult() {
     }
   }, [examId]);
 
+  // for setting the isUngraded variable
+  useEffect(() => {
+    if (selectedExamResults.length === 0) {
+      setIsUngraded(false);
+      return;
+    }
+
+    const hasUngraded = selectedExamResults.some(
+      (result) => result.score === 0 || result.score === null || result.score === undefined
+    );
+
+    setIsUngraded(hasUngraded);
+}, [selectedExamResults]);
+
   // to calculate the scores of all students for that exam
   const handleCalculateScore = async () => {
+    if (!isUngraded) {
+      alert("All students are already graded.");
+      return;
+    }
+
     try {
-      await fetch(`http://localhost:3000/result/calculate_score/${encodeURIComponent(examId)}`,{
-        method: "POST"
-      });
+      const response = await fetch(
+        `http://localhost:3000/result/calculate_score/${encodeURIComponent(examId)}`,
+        { method: "POST" }
+      );
+
+      if (!response.ok) {
+        alert("Failed to calculate scores.");
+        return;
+      }
+
+      // After calculating, refetch updated results
+      await getResultsWithUserDetails(examId);
+
     } catch (error) {
       console.log(error);
     }
@@ -199,16 +232,16 @@ export default function CheckResult() {
             <div
               key={exam._id}
               onClick={() => setExamId(exam._id)}
-              className="border rounded-lg p-4 cursor-pointer hover:shadow-xl transition"
+              className="border rounded-lg p-4 cursor-pointer hover:shadow-xl transition bg-slate-100"
             >
-              <h2 className="text-xl font-bold mb-2">{exam.title}</h2>
+              <h2 className="text-xl font-extrabold mb-2">{exam.title}</h2>
 
               <p className="text-gray-600">
-                <span className="font-semibold">Subject:</span> {exam.subject}
+                <span className="font-bold">Subject:</span> {exam.subject}
               </p>
 
               <p className="text-gray-600">
-                <span className="font-semibold">Date:</span>{" "}
+                <span className="font-bold">Date:</span>{" "}
                 {exam.date.split("T")[0]}
               </p>
 
@@ -228,9 +261,9 @@ export default function CheckResult() {
               setExamId(null);
               setSelectedExamResults([]);
             }}
-            className="mb-4 px-3 py-1 border rounded hover:bg-gray-100"
+            className="mb-4 px-3 py-1 border rounded hover:bg-gray-100 text-xl"
           >
-            ← Back to Exams
+            ←
           </button>
 
           {loadingResults ? (
@@ -243,18 +276,16 @@ export default function CheckResult() {
             <>
               <div className="space-y-3">
                 {selectedExamResults.map((result) => (
-                  <div key={result._id} className="border rounded-md mt-6">
+                  <div key={result._id} className="border rounded-md mt-6 hover:scale-105 transition-all">
                     <div
-                      className={`flex p-4 justify-between items-center cursor-pointer hover:scale-105 transition-all rounded-xl ${
-                        result.score > 0.5 ? "bg-green-200" : "bg-red-200"
-                      }`}
+                      className={`flex p-4 justify-between items-center cursor-pointer  rounded-xl`}
                       onClick={() =>
                         fetchViolations(result.userId, examId, result.name)
                       }
                     >
-                      <span className="font-medium">{result.name}</span>
+                      <span className="font-medium text-lg">{result.name}</span>
 
-                      <span className="text-sm bg-gray-100 px-3 py-1 rounded">
+                      <span className={`text-sm px-3 py-2 rounded ${result.score>0.5 ? "bg-green-300" : "bg-red-300"}`}>
                         Score: {result.score}
                       </span>
                     </div>
@@ -263,9 +294,9 @@ export default function CheckResult() {
               </div>
 
               {/* Only show calculate score button if results exist */}
-              <div className="flex w-full justify-end">
+              <div className={`flex w-full justify-end`}>
                 <button
-                  className="button rounded-lg px-3 py-2 mt-8"
+                  className={`button rounded-lg px-3 py-2 mt-8 ${isUngraded ? "button" : "bg-gray-400 cursor-not-allowed"}`}
                   onClick={handleCalculateScore}
                 >
                   Calculate Score

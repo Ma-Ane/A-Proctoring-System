@@ -22,12 +22,9 @@ import "./index.css";
 import "remixicon/fonts/remixicon.css";
 
 const Root = () => {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-
-  useEffect(() => {
-    const email = localStorage.getItem("email");
-    setIsLoggedIn(!!email); // converts string → true/false
-  }, []);
+  const [isLoggedIn, setIsLoggedIn] = useState(
+    !!localStorage.getItem("userId")
+  );
 
   return <RouterProvider router={router(isLoggedIn, setIsLoggedIn)} />;
 };

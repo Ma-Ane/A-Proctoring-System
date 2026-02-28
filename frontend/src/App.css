@@ -65,15 +65,6 @@ label {
   box-shadow: 1px 1px 20px 12px#959090e5;
 }
 
-.home__show__items{
-  padding: 0.4rem;
-}
-
-.home__show__items:hover {
-  cursor: pointer;
-  background-color: var(--primary);
-  color: white
-}
 
 .home {
   background-color: var(--background);

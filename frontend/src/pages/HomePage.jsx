@@ -3,6 +3,9 @@ import UpcomingExams from '../components/UpcomingExams';
 
 const HomePage = () => {
 
+  // for the display view of the exams
+  const [displayStyle, setDisplayStyle] = useState("list");
+
   return (
     <div className='home'>
       <h1 className='text-3xl'>Upcoming Exams</h1>
@@ -33,27 +36,28 @@ const HomePage = () => {
         </div>
 
         {/* div for some extra functionality  */}
-        <div className='flex gap-5 text-xl'>
-          <i className="home__show__items ri-list-check"></i>
-          <i className="home__show__items ri-layout-grid-line"></i>
-          <i className="home__show__items ri-calendar-line"></i>
+        <div className='flex gap-3 text-xl'>
+          <i 
+            className={`p-2 hover:cursor-pointer ri-list-check ${displayStyle === 'list' ? "bg-black text-white" : "bg-white hover:bg-black hover:text-white"}`}
+            onClick={() => setDisplayStyle("list")}
+          />
+          <i 
+            className={`p-2 hover:cursor-pointer ${displayStyle === 'grid' ? "bg-black text-white" : "bg-white hover:bg-black hover:text-white"} ri-layout-grid-line`}
+            onClick={() => setDisplayStyle("grid")}
+          />
+          <i 
+            className={`p-2 hover:cursor-pointer ${displayStyle === 'block' ? "bg-black text-white" : "bg-white hover:bg-black hover:text-white"} ri-calendar-line`}
+            onClick={() => setDisplayStyle("block")}
+          />
         </div>
       </div>
 
         
-        {/* for the headings  */}
-        <section className=' mt-9 flex text-xl font-bold'>
-          <span className='flex-[1]'>S.N</span>
-          <span className='flex-[4]'>Title</span>
-          <span className='flex-[2]'>Type</span>
-          <span className='flex-[2]'>Time</span>
-          <span className='flex-[2]'>Date</span>
-          <span className='flex-[1]'>Owner</span>
-        </section>
+
 
 
         {/* display all the ucoming exams from this compoenent  */}
-        <UpcomingExams/>
+        <UpcomingExams displayStyle={displayStyle}/>
 
     </div>
   )

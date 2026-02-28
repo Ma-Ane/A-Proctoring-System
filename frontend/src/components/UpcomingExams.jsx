@@ -1,10 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom';
 
-const UpcomingExams = () => {
-
-  // for nmavigation to a new page
-  const navigate = useNavigate();
+const UpcomingExams = ({ displayStyle }) => {
 
   // for now we are fetching exams only for BCT batch
   const batch = "BCT";
@@ -39,17 +36,30 @@ const UpcomingExams = () => {
 
 
   // check if exam is present for that batch or not
-  if (upcomingExam.length === 0) return <p className='absolute top-1/2 text-xl left-1/2'>No any upcoming exams. Relax !!</p>
-  else return (
-    <ul className='flex flex-col gap-3 mt-4 text-lg'>
+  if (upcomingExam.length === 0) 
+    return <p className='absolute top-1/2 text-xl left-1/2'>No any upcoming exams. Relax !!</p>
+  else {
+    return (
+      <div>
+        {/* for the headings  */}
+        <section className=' mt-9 flex text-xl font-bold'>
+          <span className='flex-[1]'>S.N</span>
+          <span className='flex-[4]'>Title</span>
+          <span className='flex-[2]'>Type</span>
+          <span className='flex-[2]'>Time</span>
+          <span className='flex-[2]'>Date</span>
+          <span className='flex-[1]'>Owner</span>
+        </section>
+        
         {
-          // if upcoming exam is present in the db
-           upcomingExam.map((exam, index) => (
-                <li className='flex' key={index}>
-                    <span className='flex-[1]'>{index+1}</span>
+          displayStyle === 'list' ? (
+            <ul className='flex flex-col gap-3 mt-4 text-lg'>
+              {
+                upcomingExam.map((exam, index) => (
+                  <li className='flex' key={exam._id}>
+                    <span className='flex-[1]'>{index + 1}</span>
 
                     <span className='flex-[4]'>
-                      {/* enter into exam only if student  */}
                       {
                         role === "Teacher" ? (
                           <p className="w-fit">{exam.title}</p>
@@ -66,27 +76,52 @@ const UpcomingExams = () => {
                     </span>
 
                     <span className='flex-[2] text-base'>
-                      <p className='p-1 border-2 rounded-md w-fit bg-primary text-white'>{exam.type}</p>
+                      <p className='p-1 border-2 rounded-md w-fit bg-primary text-white'>
+                        {exam.type}
+                      </p>
                     </span>
 
                     <span className='flex-[2] text-base'>
                       <p className='p-1'>{exam.time}</p>
                     </span>
-                    
-                    <span className='flex-[2]'>{exam.date.split('T')[0]}</span>
 
-                    {/* image milaunuu parxa  */}
+                    <span className='flex-[2]'>
+                      {exam.date?.split('T')[0]}
+                    </span>
+
                     <span className='flex-[1]'>
                       <img 
                         src={`http://localhost:3000/uploads/${exam.image}`} 
-                        alt="Profile Picture" 
-                        className='size-6 rounded-full'/>
+                        alt="Profile"
+                        className='size-6 rounded-full'
+                      />
                     </span>
-                </li>
-            ))
+                  </li>
+                ))
+              }
+            </ul>
+          ) : displayStyle === 'grid' ? (
+
+            <div className="mt-4">
+              {/* Grid View */}
+              Grid View Coming Soon
+            </div>
+
+          ) : displayStyle === 'block' ? (
+
+            <div className="mt-4">
+              {/* Block View */}
+              Block View Coming Soon
+            </div>
+
+          ) : null
         }
-    </ul>
-  )
+
+      </div>
+    
+    )
+  }
+
 }
 
 export default UpcomingExams;

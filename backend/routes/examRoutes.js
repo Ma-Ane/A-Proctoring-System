@@ -51,7 +51,6 @@ router.get('/get_exam_batch/:batch', async (req, res) => {
     }
 });
 
-
 // exams in batch which is not attended
 router.get('/get_exam_batch/:batch/:userId', async (req, res) => {
     try {
@@ -132,28 +131,46 @@ router.get('/my_exams/:userId', async (req, res) => {
 
     // verify if the user exists
     const user = await User.findById(userId);
-    if (!user) return res.status(404).json({error: "User not found."});
+    if (!user) return res.status(404).json({ error: "User not found." });
 
     // convert userId to ObjectId
     const objectUserId = new mongoose.Types.ObjectId(userId);
 
-    // check if the user has given any exam
+    // get results for this user
     const results = await Result.find({ userId: objectUserId });
-    if (!results || results.length === 0) 
-      return res.status(404).json({error: "Results not found."});
+    const userExamIds = results.map(r => r.examId.toString());
+    const userExamSet = new Set(userExamIds);
 
-    // extract exam ids
-    const examIds = results.map(r => r.examId);
+    // get all exams that are either inactive OR attended by the user
+    const exams = await Exam.find({
+      $or: [
+        { isActive: false },
+        { _id: { $in: userExamIds } }
+      ]
+    });
 
-    // convert examIds to ObjectId if needed (usually already ObjectId)
-    // const objectExamIds = examIds.map(id => mongoose.Types.ObjectId(id));
+    const examsWithAttendance = exams.map(exam => {
+      const examObj = exam.toObject();
+      const examIdStr = exam._id.toString();
 
-    // get exam details
-    const exams = await Exam.find({ _id: { $in: examIds }});
+      // default to true
+      let hasAttended = true;
 
-    res.status(200).json(exams);
+      // mark false only if exam is inactive and user did not attend
+      if (!exam.isActive && !userExamSet.has(examIdStr)) {
+        hasAttended = false;
+      }
+
+      return {
+        ...examObj,
+        hasAttended
+      };
+    });
+
+    res.status(200).json(examsWithAttendance);
+
   } catch (error) {
-    res.status(500).json({error: error.message});
+    res.status(500).json({ error: error.message });
   }
 });
 

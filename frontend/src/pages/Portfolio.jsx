@@ -165,7 +165,7 @@ const Portfolio = () => {
                                         <span className='flex-[1]'>{index+1}</span>
                                         <span className='flex-[5]'>{exam.title}</span>
                                         <span className='flex-[1]'>{exam.date.split("T")[0]}</span>
-                                        <span className='flex-[1]'>Attended</span>
+                                        <span className={`flex-[1] ${exam.hasAttended ? "text-green-600" : "text-red-600"}`}>{exam.hasAttended ? "Attended" : "Absent"}</span>
                                     </li>
                                 ))
                             :

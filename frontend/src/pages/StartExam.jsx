@@ -1,16 +1,16 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useContext } from "react";
 import { Link, useParams, useLocation } from "react-router-dom";
+import { UserContext } from "../UserContext";
 
 const WS_BASE_URL = `ws://127.0.0.1:8000/ws/proctor`;
 
 export default function StartExam() {
+    const{ user, loading } = useContext(UserContext);
 
     const { examId } = useParams();
     const location = useLocation();
     const query = new URLSearchParams(location.search);
     const title = query.get("title");
-
-    const userId = localStorage.getItem("userId");
 
     const videoRef = useRef(null);
     const canvasRef = useRef(null);
@@ -140,8 +140,8 @@ export default function StartExam() {
 
     // -------------------- WEBSOCKET --------------------
     useEffect(() => {
-        if (!examId || !userId) return console.error("Missing examId or userId for WebSocket");
-        const wsUrl = `${WS_BASE_URL}?exam_id=${encodeURIComponent(examId)}&user_id=${encodeURIComponent(userId)}`;
+        if (!examId || !user._id) return console.error("Missing examId or userId for WebSocket");
+        const wsUrl = `${WS_BASE_URL}?exam_id=${encodeURIComponent(examId)}&user_id=${encodeURIComponent(user._id)}`;
         const ws = new WebSocket(wsUrl);
         wsRef.current = ws;
 
@@ -156,7 +156,7 @@ export default function StartExam() {
         return () => {
             if (ws.readyState === WebSocket.OPEN) ws.close();
         };
-    }, [examId, userId]);
+    }, [examId, user]);
 
     // -------------------- SEND FRAMES --------------------
     useEffect(() => {
@@ -197,7 +197,7 @@ export default function StartExam() {
             const response = await fetch('http://localhost:3000/result/save_results', {
                 method: "POST",
                 headers: {"Content-Type": "application/json"},
-                body: JSON.stringify({ examId, userId, answers, title })
+                body: JSON.stringify({ examId, userId: user._id, answers, title })
             });
             const data = await response.json();
             if (data.error) console.log(data.error);
@@ -246,6 +246,9 @@ export default function StartExam() {
             }
         }
     }, [status]);
+
+    if (loading) return <p>Loading user data...</p>;
+    if (!user) return <p>User not logged in.</p>;
 
     return questions.length > 0 ? (
         <div className="relative h-full w-full px-5 py-5 flex justify-between">

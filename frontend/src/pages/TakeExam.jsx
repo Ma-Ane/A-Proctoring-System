@@ -1,15 +1,19 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useContext } from 'react'
 import CameraStream from '../components/CameraStream';
 import MicrophoneCheck from '../components/MicrophoneCheck';
 import { Link, useParams, useLocation } from 'react-router-dom';
+import { UserContext } from '../UserContext';
 
 const TakeExam = () => {
 
-    // get the data from the parene about the exam title 
+    // get the data from the parent about the exam title 
     const { examId } = useParams();
     const location = useLocation();
     const query = new URLSearchParams(location.search);
     const title = query.get("title");
+
+    // use user data from context instead of localStorage
+    const { user } = useContext(UserContext);
 
     const [userData, setuserData] = useState(null);
 
@@ -37,28 +41,27 @@ const TakeExam = () => {
 
     // to set all the variables to default when mounting the component
     useEffect(() => {
-        if (page === 2) {
+        if (page === 2 && user) {
             const fetchUserData = async () => {
                 try {
-                    let email = localStorage.getItem('email');
-    
+                    const email = user.email;
                     if (!email) {
-                        console.error("Email not found in localStorage");
+                        console.error("Email not found from context");
                         return;
                     }
-    
+
                     const response = await fetch(`http://localhost:3000/api/auth/get_user_email/${email}`);
-    
+
                     if (!response.ok) {
                         throw new Error("Failed to fetch user");
                     }
-    
+
                     const data = await response.json();
-    
+
                     setuserData(data);
                     setUserProfileImage(
                         `http://localhost:3000/uploads/${data.image}`
-                    );                     // console.log(data);
+                    );                     
                 } catch (error) {
                     console.log("Error fetching user data", error);
                 }
@@ -66,7 +69,7 @@ const TakeExam = () => {
         
             fetchUserData();
             
-                       // reset verification-related state
+            // reset verification-related state
             setCapturedImage("");
             setfaceVerified(false);
             setIsUserVerify(false);
@@ -76,7 +79,7 @@ const TakeExam = () => {
             setMicVerified(false);
             setIsMicAvailable(true);
         }
-    }, [page]);
+    }, [page, user]);
 
 
     // to capture the image of the user
@@ -88,13 +91,13 @@ const TakeExam = () => {
 
     // to check for match from the backend API (face verification)
     const handleVerifyUser = async () => {
-        if (!capturedImage) return;
+        if (!capturedImage || !user) return;
 
         setIsVerifying(true);
 
         const formData = new FormData();
 
-        const email = localStorage.getItem("email");
+        const email = user.email;
         
         // Fetch user's stored embedding
         try {
@@ -102,7 +105,7 @@ const TakeExam = () => {
             const data = await res.json();
             formData.append(
                 'user_image_embedding',
-                JSON.stringify(data )
+                JSON.stringify(data)
             );
         } catch (error) {
             console.log("Error fetching embedding:", error);
@@ -115,9 +118,8 @@ const TakeExam = () => {
         const blob = await fetch(capturedImage).then((res) => res.blob());
 
         // prepare for upload to the backend
-        formData.append('webcam_image', blob, 'webcam_image.png');        // name, data, filename
+        formData.append('webcam_image', blob, 'webcam_image.png');
 
-        //////////////////// aahile just eutaa naam diyeraa pathakoo xa
         try {
             const response = await fetch(`http://127.0.0.1:8000/check-verification`, {
                 method: "POST", 
@@ -133,7 +135,7 @@ const TakeExam = () => {
             }
                 
             // set the output from the backend to the variable
-            if (data.message == "Same person") {
+            if (data.message === "Same person") {
                 setfaceVerified(true);
             } else {
                 setfaceVerified(false);
@@ -141,7 +143,7 @@ const TakeExam = () => {
             };
 
         } catch (error) {
-            console.log("Error from verificaiton model", error);
+            console.log("Error from verification model", error);
         } finally {
             // remove the loading button 
             setIsVerifying(false);
@@ -182,7 +184,7 @@ const TakeExam = () => {
                     <div 
                         className={`mt-16 p-5 items-center gap-6 transition-all duration-1000 ${faceVerified === false  ? 'flex flex-col'   : 'grid sm:grid-cols-2 place-items-center gap-20'}`}>
 
-                        <div className='mt-  flex flex-col items-center gap-6'>
+                        <div className='mt- flex flex-col items-center gap-6'>
 
                             {/* duita hunxa... euta image hernaa ko lagi.... eut chaii info dekhaunee.... tara paxii after verified  */}
                             <CameraStream 
@@ -210,7 +212,7 @@ const TakeExam = () => {
                         
                         {/* if the user is verified then show the profile card */}
                         {
-                            (faceVerified) && (
+                            (faceVerified && userData) && (
                                 <div className='flex flex-col gap-3 items-center h-fit py-5 bg-third text-white w-fit px-6 mt-8 rounded-3xl profile__card'>
                                     <img 
                                         src={userProfileImage} 
@@ -313,7 +315,6 @@ const TakeExam = () => {
                                 alert("Microphone verification required.");
                                 return;
                             }
-
 
                             setPage((prev) => Math.min(3, prev+1));
                         }}

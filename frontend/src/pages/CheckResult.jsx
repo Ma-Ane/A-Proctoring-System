@@ -1,7 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useContext, use } from "react";
+import { UserContext } from "../UserContext";
 
 export default function CheckResult() {
-  const userId = localStorage.getItem("userId");
+
+  const { user, loading } = useContext(UserContext);
 
   const [examForTeacher, setExamForTeacher] = useState([]);
   const [examId, setExamId] = useState(null);
@@ -23,7 +25,7 @@ export default function CheckResult() {
   const getExamCreated = async () => {
     try {
       const response = await fetch(
-        `http://localhost:3000/api/exam/get_exam_teacher/${encodeURIComponent(userId)}`
+        `http://localhost:3000/api/exam/get_exam_teacher/${encodeURIComponent(user._id)}`
       );
 
       if (!response.ok) throw new Error("Error fetching exams");

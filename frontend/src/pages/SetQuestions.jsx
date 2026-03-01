@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useContext } from "react";
+import { UserContext } from "../UserContext";
 
 const subjects = [
   "Maths",
@@ -9,6 +10,8 @@ const subjects = [
 ];
 
 const SetQuestions = () => {
+  const { user, loading } = useContext(UserContext);
+
   const [subject, setSubject] = useState("");
   const [examTitle, setExamTitle] = useState("");
   const [questionTitle, setQuestionTitle] = useState("");
@@ -18,8 +21,6 @@ const SetQuestions = () => {
   const [options, setOptions] = useState(["", "", "", ""]);
   const [correctAnswer, setCorrectAnswer] = useState("");
   const [questions, setQuestions] = useState([]);
-
-  const userId = localStorage.getItem("userId");
 
   const allOptionsFilled = options.every(opt => opt.trim() !== "");
 
@@ -69,7 +70,7 @@ const SetQuestions = () => {
         title: examTitle,
         subject,
         type,
-        createdBy: userId,
+        createdBy: user?._id,
         time,
         batch
       };
@@ -109,6 +110,9 @@ const SetQuestions = () => {
       console.log(error);
     }
   };
+
+    if (loading) return <p>Loading user data...</p>;
+    if (!user) return <p>User not logged in.</p>;
 
   return (
     <div className="max-w-5xl mx-auto p-4 flex flex-col gap-6">

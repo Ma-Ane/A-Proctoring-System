@@ -1,20 +1,4 @@
-// import { StrictMode } from 'react'
-// import { createRoot } from 'react-dom/client'; 
-// import './index.css'
-// import router from './router.jsx'
-// import "remixicon/fonts/remixicon.css";
-
-// // for managing all the routes in the website
-// import { RouterProvider } from 'react-router-dom'
-
-// createRoot(document.getElementById('root')).render(
-//   <StrictMode>
-//       <RouterProvider router={router}/>
-//   </StrictMode>,
-// )
-
-
-import React, { StrictMode, useEffect, useState } from "react";
+import React, { StrictMode, useState } from "react";
 import ReactDOM from "react-dom/client";
 import { RouterProvider } from "react-router-dom";
 import router from "./router";
@@ -23,11 +7,14 @@ import "remixicon/fonts/remixicon.css";
 import { UserProvider } from "./UserContext";
 
 const Root = () => {
-  const [isLoggedIn, setIsLoggedIn] = useState(
-    !!localStorage.getItem("userId")
-  );
+  // React state to track login status
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
-  return <RouterProvider router={router(isLoggedIn, setIsLoggedIn)} />;
+  return (
+    <RouterProvider
+      router={router(isLoggedIn, setIsLoggedIn)}
+    />
+  );
 };
 
 ReactDOM.createRoot(document.getElementById("root")).render(

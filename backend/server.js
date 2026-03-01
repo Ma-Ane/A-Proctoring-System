@@ -17,10 +17,13 @@ app.use(helmet());
 
 // Middlewares
 // if using cookies, then we need to mention the origin
-app.use(cors({
-    origin: "http://localhost:5173", // your frontend URL
-    credentials: true
-}));
+const corsOptions = {
+  origin: "http://localhost:5173",
+  credentials: true,
+};
+
+// Apply CORS for all routes
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(cookieParser());
 
@@ -37,7 +40,13 @@ app.use(cookieParser());
   // upload image routes
   const uploadRoutes = require('./routes/uploadImageRoutes');
   app.use("/api/uploads", uploadRoutes);
-  app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+app.use('/uploads', (req, res, next) => {
+  res.setHeader("Access-Control-Allow-Origin", "http://localhost:5173");
+  res.setHeader("Access-Control-Allow-Credentials", "true");
+  res.removeHeader("Cross-Origin-Resource-Policy"); // important!
+  next();
+}, express.static(path.join(__dirname, 'uploads')));
 
 
   // fetch user image for verificaiton

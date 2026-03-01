@@ -1,108 +1,78 @@
 import React, { useEffect, useState } from 'react'
+import { useContext } from "react";
+import { UserContext } from "../UserContext";
 
 const Portfolio = () => {
 
     // for now 
     const batch = "BCT";
 
-    // get from local Storage
-    const role = localStorage.getItem("role");
-    const userId = localStorage.getItem("userId");
+    // get the user from context
+    const { user, loading } = useContext(UserContext);
 
-    // paxii user lai fetch garnuu parxaa
-
+    
     // for chosing between attendance and personal details 
     const [isAttendance, setIsAttendance] = useState(true);
-
-    const [userName, setuserName] = useState('');
-    const [userImagePath, setImagePath] = useState('');
-    const [userData, setuserData] = useState(null);
-
+    
     // for attendance exam
     const [examAttended, setExamAttended] = useState([]);
-
+    
     // for the exams for teacher 
     const [examForTeacher, setExamForTeacher] = useState([]);
     // check if the exam status is changed
     const [toggleStatus, setToggleStatus] = useState(true);
-
+    
     // render the available exams for the user in his/her batch
     useEffect(() => {
-        const fetchUserData = async () => {
-            try {
-                let email = localStorage.getItem('email');
-
-                if (!email) {
-                    console.error("Email not found in localStorage");
-                    return;
-                }
-
-                const response = await fetch(`http://localhost:3000/api/auth/get_user_email/${email}`);
-
-                if (!response.ok) {
-                    throw new Error("Failed to fetch user");
-                }
-
-                const data = await response.json();
-
-                setuserData(data);
-                // console.log(data);
-            } catch (error) {
-                console.log("Error fetching user data", error);
-            }
-        };
-
+        if (!user) return;
+        
         const fetchExamInBatch = async () => {
             try {
-                const response = await fetch(`http://localhost:3000/api/exam/my_exams/${encodeURIComponent(userId)}`);
-
+                const response = await fetch(`http://localhost:3000/api/exam/my_exams/${encodeURIComponent(user._id)}`);
+                
                 const data = await response.json();
-
+                
                 setExamAttended(data);
-                console.log(data);
             } catch (error) {
                 console.log("Error fetching exams", error);
             }
         };
-
-        setuserName(localStorage.getItem('name'));
-        setImagePath(localStorage.getItem('image'));
-
-        fetchUserData();
         fetchExamInBatch();
-    }, []);
-
+    }, [user]);
+    
     // to fetch the exams cretaed by the teacher account
     const getExamCreated = async () => {
         try {
-            const response = await fetch(`http://localhost:3000/api/exam/get_exam_teacher/${encodeURIComponent(userId)}`);
-
+            const response = await fetch(`http://localhost:3000/api/exam/get_exam_teacher/${encodeURIComponent(user._id)}`);
+            
             if (!response.ok) throw new Error ("Error while fetching exams for teacher.");
-
+            
             const data = await response.json();
-
+            
             setExamForTeacher(data);
         } catch (error) {
             console.log(error);
         }
     };
-
+    
     // to load the exams for user or the func above (teacher)
     useEffect(() => {
-        if (role === 'Teacher') {
+        if (!user) return;
+        
+        if (user.role === 'Teacher') {
             getExamCreated();
         }
-    }, [role, toggleStatus]);
-
+    }, [user, toggleStatus]);
+    
     // to change the active status of the exam
     const changeActiveStatus = async (examId) => {
         try {
             const response = await fetch(`http://localhost:3000/api/exam/toggle_active_status/${encodeURIComponent(examId)}`, {
                 method: "PATCH"
             });
-
+            
             if (!response.ok) throw new Error("Error in toggle API.");
-
+            
             const data = await response.json();
             setToggleStatus((prev) => !prev);
             console.log(data.message);
@@ -110,19 +80,23 @@ const Portfolio = () => {
             console.log(error);
         }
     };
+    
+    if (loading) return <p>Loading user data...</p>;
+    if (!user) return <p>User not logged in.</p>;
 
-  return (
-    // main dic for all contents 
-    <div className='home flex flex-col items-center gap-4'>
+    
+    return (
+        // main dic for all contents 
+        <div className='home flex flex-col items-center gap-4'>
 
         {/* section for student image and name  */}
         <section className='flex flex-col gap-3 items-center'>
             <img 
-                src={`http://localhost:3000/uploads/${userImagePath}`}
+                src={`http://localhost:3000/uploads/${user.image}`}
                 alt="" 
                 className='size-28 rounded-full object-cover'
-            />
-            <h1 className='text-2xl font-bold'>{userName}</h1>
+                />
+            <h1 className='text-2xl font-bold'>{user?.name}</h1>
         </section>
 
         {/* // for attentance and personal details button  */}
@@ -130,13 +104,13 @@ const Portfolio = () => {
             <span 
                 className={`p-2 hover:cursor-pointer focus:text-white rounded-lg ${isAttendance ? 'bg-primary text-white' : ''}`}
                 onClick={() => setIsAttendance(true)}
-            >
+                >
                     Attendance
             </span>
             <span 
                 className={`p-2 w-fit hover:cursor-pointer hover:bg-primary rounded-lg ${!isAttendance ? 'bg-primary text-white' : ''}`}
                 onClick={() => setIsAttendance(false)}
-            >
+                >
                     Personal Details
             </span>
         </section>
@@ -158,7 +132,7 @@ const Portfolio = () => {
 
                         {/* different content for students and teachers  */}
                         {
-                            role === 'Student' ?
+                            user.role === 'Student' ?
                                 /* for students to see which exams did they appear in  */
                                 examAttended.map((exam, index) => (
                                     <li key={index} className='flex'>
@@ -197,22 +171,22 @@ const Portfolio = () => {
                 <section className='flex flex-col gap-5'>
                     <div className='flex flex-row gap-2 items-center'>
                         <label className='text-black text-base md:text-lg lg:text-xl font-bold'>Name: </label>
-                        <span className='text-lg'>{userData.name}</span>
+                        <span className='text-lg'>{user.name}</span>
                     </div>
                     
                     <div className='flex flex-row gap-2 items-center'>
                         <label className='text-black text-base md:text-lg lg:text-xl  font-bold'>Batch: </label>
-                        <span className='text-lg'>{userData.batch}</span>
+                        <span className='text-lg'>{user.batch}</span>
                     </div>
 
                     <div className='flex flex-row gap-2 items-center'>
                         <label className='text-black text-base md:text-lg lg:text-xl  font-bold'>Gender: </label>
-                        <span className='text-lg'>{userData.gender}</span>
+                        <span className='text-lg'>{user.gender}</span>
                     </div>
 
                     <div className='flex flex-row gap-2 items-center'>
                         <label className='text-black text-base md:text-lg lg:text-xl  font-bold'>Age: </label>
-                        <span className='text-lg'>{userData.age}</span>
+                        <span className='text-lg'>{user.age}</span>
                     </div>
 
                 </section>
@@ -221,12 +195,12 @@ const Portfolio = () => {
                 <section className='flex flex-col gap-5'>
                     <div className='flex flex-row gap-2 items-center'>
                         <label className='text-black text-base md:text-lg lg:text-xl  font-bold'>Role: </label>
-                        <span className='text-lg'>{userData.role}</span>
+                        <span className='text-lg'>{user.role}</span>
                     </div>
 
                     <div className='flex flex-row gap-2 items-center'>
                         <label className='text-black text-base md:text-lg lg:text-xl  font-bold'>Email: </label>
-                        <span className='text-lg'>{userData.email}</span>
+                        <span className='text-lg'>{user.email}</span>
                     </div>
                 </section>
             </div>

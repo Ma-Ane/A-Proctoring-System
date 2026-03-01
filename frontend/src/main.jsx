@@ -20,6 +20,7 @@ import { RouterProvider } from "react-router-dom";
 import router from "./router";
 import "./index.css";
 import "remixicon/fonts/remixicon.css";
+import { UserProvider } from "./UserContext";
 
 const Root = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(
@@ -31,6 +32,8 @@ const Root = () => {
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <StrictMode>
-    <Root />
+    <UserProvider>
+      <Root />
+    </UserProvider>
   </StrictMode>
 );

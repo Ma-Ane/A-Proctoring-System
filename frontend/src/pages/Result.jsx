@@ -1,12 +1,9 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useContext } from 'react'
+import { UserContext } from '../UserContext';
 
 const Result = () => {
-    const [userName, setuserName] = useState('');
-
-    // taking the email of the logged in user
-    const email = localStorage.getItem("email");
-    const userId = localStorage.getItem("userId");
-    const profileImg = localStorage.getItem("image")
+    // get details of the logged in user
+    const { user, loading } = useContext(UserContext);
 
     // a sample of the exam results to be printed
     const [examResults, setExamResults] = useState([
@@ -34,7 +31,7 @@ const Result = () => {
     useEffect(() => {
         const fetchExamHistory= async () => {
             try {
-                const response = await fetch(`http://localhost:3000/api/auth/get_result/${encodeURIComponent(userId)}`);
+                const response = await fetch(`http://localhost:3000/api/auth/get_result/${encodeURIComponent(user._id)}`);
                 
                 const data = await response.json();
                 setExamResults(data);
@@ -44,21 +41,24 @@ const Result = () => {
             }
         };
 
-        setuserName(localStorage.getItem('name'));
         fetchExamHistory();
     }, []);
+
+    // Show loading state while fetching user
+    if (loading) return <p>Loading user data...</p>;
+    if (!user) return <p>User not logged in.</p>;
 
   return (
     <div className='home flex flex-col items-center gap-4'>
         {/* section for student image and name  */}
         <section className='flex flex-col gap-3 items-center'>
             <img 
-                src={`http://localhost:3000/uploads/${profileImg}`}
+                src={`http://localhost:3000/uploads/${user.image}`}
                 alt="" 
                 className='size-28 rounded-full object-cover'
             />
             
-            <h1 className='text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold'>{userName}</h1>
+            <h1 className='text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold'>{user.name}</h1>
 
         </section>
 

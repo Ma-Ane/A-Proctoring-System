@@ -10,7 +10,7 @@ require("dotenv").config();
 
 const User = require('../models/user');
 const Result = require('../models/result');
-const authMiddleware = require("../authMiddleware");
+const authMiddleware = require("../authMiddleware.js");
 
 // a function to take plain text and hash 
 async function hashPassword (password) {
@@ -194,9 +194,7 @@ router.get('/me', authMiddleware, async (req, res) => {
     try {
         const user = await User.findById(req.user.id).select("-password");
 
-        if (!user) {
-            return res.status(404).json({ error: "User not found" });
-        }
+        if (!user) return res.status(404).json({ error: "User not found" });
 
         res.status(200).json(user);
     } catch (error) {

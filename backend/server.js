@@ -3,16 +3,26 @@ const cors = require('cors');
 require("dotenv").config();
 const connectDB = require('./config_db');
 const path = require('path');
+const cookieParser = require("cookie-parser");
+const helmet = require("helmet");
+
 
 connectDB(  );
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// security middleware
+app.use(helmet());
 
 // Middlewares
-app.use(cors());
+// if using cookies, then we need to mention the origin
+app.use(cors({
+    origin: "http://localhost:5173", // your frontend URL
+    credentials: true
+}));
 app.use(express.json());
+app.use(cookieParser());
 
 
 // created test routes

@@ -120,35 +120,43 @@ const LoginPage = ({onLogin}) => {
     };  
 
     // to handle the login option for the user
-    const handleLogIn = async() => {
+    const handleLogIn = async () => {
         try {
-            const res = await fetch('http://localhost:3000/api/auth/verify_credentials', {
-                method: "POST", 
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify(logInUser)
+            const res = await fetch('http://localhost:3000/api/auth/login', {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(logInUser),
+                credentials: "include"
             });
 
-            const data = await res.json();
+            if (!res.ok) {
+                const errorData = await res.json();
+                return alert(errorData.error);
+            }
 
-            // console.log("A", data)
-            
-            if (data.error)
-                alert(data.error);
-            else {
-                localStorage.setItem("email", logInUser.email);
-                localStorage.setItem("name", data.name);
-                localStorage.setItem("image", data.image);
-                localStorage.setItem("userId", data.id);
-                localStorage.setItem("role", data.role);
-                // alert("User found. Press OK to go to home screen.")
+            // Immediately fetch logged-in user
+            const meRes = await fetch("http://localhost:3000/api/auth/me", {
+                credentials: "include"
+            });
+
+            const userData = await meRes.json();
+
+            if (meRes.ok) {
+                // temporarily store for your existing app logic
+                localStorage.setItem("name", userData.name);
+                localStorage.setItem("image", userData.image);
+                localStorage.setItem("userId", userData._id);
+                localStorage.setItem("role", userData.role);
+
                 onLogin();
                 navigate('/');
+            } else {
+                alert(userData.error);
             }
 
         } catch (error) {
-            
+            console.error(error);
+            alert("Login failed");
         }
     };
 

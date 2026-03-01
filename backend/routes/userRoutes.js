@@ -5,9 +5,12 @@ const router = express.Router();
 const bcrypt = require('bcrypt');
 const path = require('path');
 const fs = require('fs');
+const jwt = require("jsonwebtoken");
+require("dotenv").config();
 
 const User = require('../models/user');
 const Result = require('../models/result');
+const authMiddleware = require("../authMiddleware");
 
 // a function to take plain text and hash 
 async function hashPassword (password) {
@@ -129,21 +132,40 @@ router.get('/get_embedding/:email', async (req, res) => {
 });
 
 // check the login info to grant access
-router.post('/verify_credentials', async(req, res) => {
+router.post('/login', async(req, res) => {
     try {
         const {email, password} = req.body;
 
         // find that one user from the db with email
         const foundUser = await User.findOne({email: email});
-        if (!foundUser) throw new Error("User with such email not found");
+        if (!foundUser) return res.status(400).json({ error: "Invalid credentials" });
 
         // verify the password of the user
         const isMatch = await verifyPassword(password, foundUser.password);
-        if (isMatch)
-            res.status(200).json({message: "User found", name: foundUser.name, image: foundUser.image, id: foundUser._id, role: foundUser.role});
-        else
-            res.status(401).json({error: "Incorrect Password"});
 
+        if (!isMatch) return res.status(401).json({error: "Invalid credentials"});
+
+        // create JWT
+        const token = jwt.sign(
+            {
+                id: foundUser._id,
+                role: foundUser.role,
+            },
+            process.env.JWT_SECRET,
+            { expiresIn: "1d" }
+        );
+
+        // set httpOnly cookie
+        res.cookie("access_token", token, {
+            path: "/",
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: "lax",
+            maxAge: 1000 * 60 * 60 * 24 // 1 day
+        });
+
+        // res.status(200).json({ message: "Login successful" })
+        res.status(200).json({ message: "Login successful", name: foundUser.name, image: foundUser.image, id: foundUser._id, role: foundUser.role });
     } catch (error) {
         res.status(500).json({error: error.message});
     }
@@ -163,6 +185,22 @@ router.get("/get_result/:userId", async (req, res) => {
         return res.status(200).json(foundResult)
     } catch (error) {
         res.status(500).json({error: error.message})
+    }
+});
+
+
+// to get the user info after JWT implementation
+router.get('/me', authMiddleware, async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id).select("-password");
+
+        if (!user) {
+            return res.status(404).json({ error: "User not found" });
+        }
+
+        res.status(200).json(user);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
     }
 });
 

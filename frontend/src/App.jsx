@@ -2,6 +2,7 @@ import { Outlet } from "react-router-dom";
 import './App.css'
 import MenuBar from "./components/MenuBar";
 
+
 export default function App() {
   return (
     <div className="flex h-screen">

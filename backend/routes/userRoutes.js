@@ -202,4 +202,16 @@ router.get('/me', authMiddleware, async (req, res) => {
     }
 });
 
+
+// to logout
+router.post("/logout", (req, res) => {
+    res.clearCookie("token", {
+        httpOnly: true,
+        sameSite: "lax",
+        secure: false // true in production (HTTPS)
+    });
+
+    res.status(200).json({ message: "Logged out successfully" });
+});
+
 module.exports = router;

@@ -1,7 +1,9 @@
-import React, { useState } from 'react'
+import React, { useState, useContext } from 'react'
 import { Link, useNavigate } from 'react-router-dom';
+import { UserContext } from '../UserContext';
 
 const MenuBar = () => {
+    const { user, setUser, loading  } = useContext(UserContext);
 
     const navigate = useNavigate()
 
@@ -14,13 +16,26 @@ const MenuBar = () => {
     // to set the active menu that is being clicked
     const [activeMenu, setActiveMenu] = useState('home');
 
-    // get the role of the user
-    const role = localStorage.getItem("role");
+    const handleLogout = async () => {
+        try {
+            // call backend to clear httpOnly cookie
+            await fetch("http://localhost:3000/api/auth/logout", {
+                method: "POST",
+                credentials: "include"
+            });
 
-    const handleLogout = ()=>{
-        localStorage.clear();
-        navigate('/login');
-    }
+            // clear user from context
+            setUser(null);
+
+            // redirect to login
+            navigate("/login");
+
+        } catch (error) {
+            console.error("Logout failed", error);
+        }
+    };
+
+    if (loading || !user) return null;
 
   return (
     <div className='relative flex flex-col bg-background py-10 px-3 gap-10 border-r-2 border-r-gray-200'>
@@ -75,7 +90,7 @@ const MenuBar = () => {
                 </li>
 
             {
-                role === "Student" ?
+                user.role === "Student" ?
                     <Link to='/results' onClick={() => setActiveMenu('results')}>
                         <li className={`menu__options ${activeMenu === 'results' ? 'bg-primary text-white hover:!bg-primary' : ''}`}>
                             <i className="ri-file-text-line"></i>
@@ -94,7 +109,7 @@ const MenuBar = () => {
             </Link>
 
             {
-                role === "Teacher" ? 
+                user.role === "Teacher" ? 
                     <Link to='/set_questions' onClick={() => setActiveMenu('set_questions')}>
                         <li className={`menu__options ${activeMenu === 'set_questions' ? 'bg-primary text-white hover:!bg-primary' : ''}`}>
                             <i className="ri-questionnaire-line"></i>
@@ -106,7 +121,7 @@ const MenuBar = () => {
             }
 
             {
-                role === "Teacher" ?
+                user.role === "Teacher" ?
                     <Link to='/check_result' onClick={() => setActiveMenu('check_result')}>
                         <li className={`menu__options ${activeMenu === 'check_result' ? 'bg-primary text-white hover:!bg-primary' : ''}`}>
                             <i className="ri-calculator-line"></i>

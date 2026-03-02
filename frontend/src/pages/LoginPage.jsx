@@ -1,8 +1,10 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useContext } from 'react'
 import { useNavigate } from 'react-router-dom';
+import { UserContext } from '../UserContext';
 
 const LoginPage = ({ onLogin }) => {
 
+    const { setUser } = useContext(UserContext);
     const navigate = useNavigate();
 
     // for checking if login or sign up by user
@@ -17,11 +19,6 @@ const LoginPage = ({ onLogin }) => {
 
     // for storing the login info the user 
     const [logInUser, setLogInUser] = useState({ email: "", password: "" })
-
-    // reset to null after every render
-    useEffect(() => {
-        setLogInUser({ email: "", password: "" });
-    }, []);
 
     // for storing values before creating a new user
     const [tempUser, setTempUser] = useState({
@@ -108,6 +105,14 @@ const LoginPage = ({ onLogin }) => {
     // to handle the login option for the user
     const handleLogIn = async () => {
         try {
+            // Clear previous session first
+            await fetch("http://localhost:3000/api/auth/logout", {
+                method: "POST",
+                credentials: "include"
+            });
+
+            setUser(null); // clear old context immediately
+
             const res = await fetch('http://localhost:3000/api/auth/login', {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -125,11 +130,17 @@ const LoginPage = ({ onLogin }) => {
                 credentials: "include"
             });
 
+            if (!meRes.ok) {
+                const errorData = await meRes.json();
+                return alert(errorData.error);
+            }
+
             const userData = await meRes.json();
 
             if (meRes.ok) {
-                // ✅ Instead of localStorage, use onLogin callback to store globally
+                // Instead of localStorage, use onLogin callback to store globally
                 onLogin(userData);
+                setUser(userData);
                 navigate('/');
             } else {
                 alert(userData.error);

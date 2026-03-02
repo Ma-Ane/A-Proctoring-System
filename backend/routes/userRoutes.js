@@ -164,8 +164,8 @@ router.post('/login', async(req, res) => {
             maxAge: 1000 * 60 * 60 * 24 // 1 day
         });
 
-        // res.status(200).json({ message: "Login successful" })
-        res.status(200).json({ message: "Login successful", name: foundUser.name, image: foundUser.image, id: foundUser._id, role: foundUser.role });
+        res.status(200).json({ message: "Login successful" })
+        // res.status(200).json({ message: "Login successful", name: foundUser.name, image: foundUser.image, id: foundUser._id, role: foundUser.role });
     } catch (error) {
         res.status(500).json({error: error.message});
     }

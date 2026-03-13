@@ -111,12 +111,12 @@ class ArcMarginProduct(nn.Module):
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 def load_face_verification_model(model_path: str, num_classes: int):
-    # check if the GPU version of torch
+    # # check if the GPU version of torch
     # print(torch.__version__)
     # print("CUDA available:", torch.cuda.is_available())
     # print("Built with CUDA:", torch.version.cuda)
 
-    # check if CUDA is available
+    # # check if CUDA is available
     # print("CUDA available:", torch.cuda.is_available())
     # print("CUDA device count:", torch.cuda.device_count())
     # if torch.cuda.is_available():

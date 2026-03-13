@@ -162,6 +162,7 @@ async def proctor_ws(websocket: WebSocket, exam_id: str = Query(...), user_id: s
     last_face_inference = 0
     last_violation_time = 0
     VIOLATION_COOLDOWN = 3  # seconds to avoid saving duplicate violations rapidly
+    last_inference_img = None       # for retaining the last image at the time of violation
 
     GAZE_INFERENCE_INTERVAL = 0.5
     FACE_INFERENCE_INTERVAL = 0.8
@@ -219,6 +220,7 @@ async def proctor_ws(websocket: WebSocket, exam_id: str = Query(...), user_id: s
             if now - last_gaze_inference >= GAZE_INFERENCE_INTERVAL:
                 relative_yaw, sclera, side, gaze_state, state["suspicion_score"], state["warning_count"] = detect_gaze(img, state)
                 last_gaze_inference = now
+                last_inference_img = img 
 
             # --- Face detection ---
             if now - last_face_inference >= FACE_INFERENCE_INTERVAL:
@@ -266,15 +268,15 @@ async def proctor_ws(websocket: WebSocket, exam_id: str = Query(...), user_id: s
             elif status["absent"]:
                 violations = "Student absent"
 
-            elif status["faces_detected"] == 1 and gaze_state != "ON_SCREEN":
-                violations = f"Gaze off screen ({gaze_state})"
+            elif status["faces_detected"] == 1 and gaze_state != "ON_SCREEN" and side in ("LEFT", "RIGHT"):
+                violations = f"Gaze off screen ({side})"
 
 
             if violations and (now - last_violation_time > VIOLATION_COOLDOWN):
                 try:
                     # Convert image to base64
                     img_buffer = io.BytesIO()
-                    img.save(img_buffer, format="JPEG")
+                    last_inference_img.save(img_buffer, format="JPEG")
                     img_base64 = base64.b64encode(img_buffer.getvalue()).decode("utf-8")
 
                     flag_doc = {

@@ -127,6 +127,7 @@ export default function StartExam() {
                     }));
 
                     hiddenStart = null;
+                    setTabViolation("");
                 }
             }
         };

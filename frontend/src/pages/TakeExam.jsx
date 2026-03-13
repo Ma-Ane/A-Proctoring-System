@@ -312,7 +312,7 @@ const TakeExam = () => {
                 // if last page .i.e 3 then no next button
                 (page !== 3) ? 
                     <button 
-                        className={`exam-button ${(page === 1) && isAccepted ? 'visible' : 'hidden'}`} 
+                        className={`exam-button ${isAccepted ? 'visible' : 'hidden'}`} 
                         onClick={() => {
                             // check if the user is verified or not
                             if (page === 2 && !faceVerified) {

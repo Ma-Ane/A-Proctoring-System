@@ -241,7 +241,7 @@ def detect_gaze(img, state):
             return 0.0, 0.0, "STRAIGHT", "ON_SCREEN", state["suspicion_score"], state["warning_count"]
 
         # Smooth yaw
-        alpha = 0.2
+        alpha = 0.6     # change gareko from 0.2
         # if startup:
         #     baseline_yaw = calibration(img_rgb)
         

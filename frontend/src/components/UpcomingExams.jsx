@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom';
+import { useContext } from "react";
+import { UserContext } from "../UserContext";
 
 const UpcomingExams = ({ displayStyle }) => {
 
   // for now we are fetching exams only for BCT batch
   const batch = "BCT";
-  const userId = localStorage.getItem("userId");
-  const role = localStorage.getItem("role");
+  const { user, loading } = useContext(UserContext);
 
   // for kati oota upcoming exam teskoo lagiiii
   const [upcomingExam, setUpcomingExam] = useState([]);
@@ -33,7 +34,8 @@ const UpcomingExams = ({ displayStyle }) => {
     fetchUpcomingExam();
   }, []);
 
-
+  if (loading) return <p>Loading user data...</p>;
+  if (!user) return <p>User not logged in.</p>;
 
   // check if exam is present for that batch or not
   if (upcomingExam.length === 0) 
@@ -61,7 +63,7 @@ const UpcomingExams = ({ displayStyle }) => {
 
                     <span className='flex-[4]'>
                       {
-                        role === "Teacher" ? (
+                        user.role === "Teacher" ? (
                           <p className="w-fit">{exam.title}</p>
                         ) : (
                           <Link

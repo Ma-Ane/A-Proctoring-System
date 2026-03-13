@@ -39,6 +39,9 @@ const TakeExam = () => {
     const [micVerified, setMicVerified] = useState(false);
     const [isMicAvailable, setIsMicAvailable] = useState(true);
 
+    // to check if the user has accepted the terms 
+    const [isAccepted, setIsAccepted] = useState(false)
+
     // to set all the variables to default when mounting the component
     useEffect(() => {
         if (page === 2 && user) {
@@ -160,20 +163,27 @@ const TakeExam = () => {
             {
                 // the first page to show is the instructions page
                 (page === 1) && (
-                    <div className='mt-16 bg-third rounded-lg pb-10 text-white p-5'>
-                        <p className="text-xl mt-6">
-                            To ensure fairness and security, this exam uses AI-based monitoring. 
-                            Please read the following instructions carefully:
+                    <div className='mt-16'>
+                        <div className='bg-third pb-10 text-white p-5 rounded-lg'>
+                            <p className="text-xl mt-6">
+                                To ensure fairness and security, this exam uses AI-based monitoring. 
+                                Please read the following instructions carefully:
+                            </p>
+                            <ul className="pl-5 text-base space-y-1 mt-5">
+                                <li>✔ Your identity will be verified before starting the exam.</li>
+                                <li>✔ Your <b>camera and microphone</b> will remain active during the exam.</li>
+                                <li>✔ Only <b>suspicious activities</b> (e.g., multiple faces, unusual sounds, frequent looking away) are recorded.</li>
+                                <li>✔ Monitoring is strictly for <b>exam integrity</b> and not shared with others.</li>
+                                <li>✔ Sit in a <b>quiet, well-lit place</b> with only yourself visible on screen.</li>
+                                <li>✔ Any type of suspicious behaviour will be <b>warned and flagged by the system.</b></li>
+                                <li>✔ If you have any complaints or dissatisfaction with the model, you can <b>contact us through mail.</b></li>
+                            </ul>
+                        </div>
+
+                        <p className='mt-3 ml-5 flex gap-4 text-xl'>
+                            <input type='checkbox' checked={isAccepted} onChange={(e) => setIsAccepted(e.target.checked)} />
+                            <span>I agree to the terms and conditions as mentioned.</span>
                         </p>
-                        <ul className="pl-5 text-base space-y-1 mt-5">
-                            <li>✔ Your identity will be verified before starting the exam.</li>
-                            <li>✔ Your <b>camera and microphone</b> will remain active during the exam.</li>
-                            <li>✔ Only <b>suspicious activities</b> (e.g., multiple faces, unusual sounds, frequent looking away) are recorded.</li>
-                            <li>✔ Monitoring is strictly for <b>exam integrity</b> and not shared with others.</li>
-                            <li>✔ Sit in a <b>quiet, well-lit place</b> with only yourself visible on screen.</li>
-                            <li>✔ Any type of suspicious behaviour will be <b>warned and flagged by the system.</b></li>
-                            <li>✔ If you have any complaints or dissatisfaction with the model, you can <b>contact us through mail.</b></li>
-                        </ul>
                     </div>
                 )
             }
@@ -302,9 +312,8 @@ const TakeExam = () => {
                 // if last page .i.e 3 then no next button
                 (page !== 3) ? 
                     <button 
-                        className='exam-button' 
+                        className={`exam-button ${(page === 1) && isAccepted ? 'visible' : 'hidden'}`} 
                         onClick={() => {
-
                             // check if the user is verified or not
                             if (page === 2 && !faceVerified) {
                                 alert("Face Verification required.");

@@ -11,7 +11,7 @@ import numpy as np
 from torchvision import transforms
 import matplotlib.pyplot as plt
 import os
-
+import cv2
 
 # -------- Model Definitions ----------
 class ResNet50_EmbeddingNet(nn.Module):

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useContext } from 'react'
 import { useNavigate } from 'react-router-dom';
 import { UserContext } from '../UserContext';
 
-const LoginPage = ({ onLogin }) => {
+const LoginPage = () => {
 
     const { setUser } = useContext(UserContext);
     const navigate = useNavigate();
@@ -138,8 +138,7 @@ const LoginPage = ({ onLogin }) => {
             const userData = await meRes.json();
 
             if (meRes.ok) {
-                // Instead of localStorage, use onLogin callback to store globally
-                onLogin(userData);
+                // set the current user 
                 setUser(userData);
                 navigate('/');
             } else {

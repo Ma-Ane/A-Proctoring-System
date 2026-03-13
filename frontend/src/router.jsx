@@ -73,7 +73,7 @@ const router = (isLoggedIn, setIsLoggedIn) =>
 
     {
       path: "/login",
-      element: <LoginPage onLogin={() => setIsLoggedIn(true)} />,
+      element: <LoginPage />,
     },
 
     {

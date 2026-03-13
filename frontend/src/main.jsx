@@ -4,15 +4,22 @@ import { RouterProvider } from "react-router-dom";
 import router from "./router";
 import "./index.css";
 import "remixicon/fonts/remixicon.css";
-import { UserProvider } from "./UserContext";
+import { UserProvider, UserContext } from "./UserContext";
+import { useContext } from "react";
 
 const Root = () => {
-  // React state to track login status
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const { user, loading } = useContext(UserContext);
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
+  const isLoggedIn = !!user;
 
   return (
     <RouterProvider
-      router={router(isLoggedIn, setIsLoggedIn)}
+      router={router(isLoggedIn)}
+      key={isLoggedIn}
     />
   );
 };

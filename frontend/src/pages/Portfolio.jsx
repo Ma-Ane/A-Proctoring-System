@@ -102,13 +102,13 @@ const Portfolio = () => {
         {/* // for attentance and personal details button  */}
         <section className='flex sm:flex-row flex-col justify-between w-full px-5 text-xl'>
             <span 
-                className={`p-2 hover:cursor-pointer focus:text-white rounded-lg ${isAttendance ? 'bg-primary text-white' : ''}`}
+                className={`p-2 hover:cursor-pointer hover:bg-primary hover:text-white focus:text-white rounded-lg ${isAttendance ? 'bg-primary text-white' : ''}`}
                 onClick={() => setIsAttendance(true)}
                 >
                     Attendance
             </span>
             <span 
-                className={`p-2 w-fit hover:cursor-pointer hover:bg-primary rounded-lg ${!isAttendance ? 'bg-primary text-white' : ''}`}
+                className={`p-2 w-fit hover:cursor-pointer hover:bg-primary hover:text-white rounded-lg ${!isAttendance ? 'bg-primary text-white' : ''}`}
                 onClick={() => setIsAttendance(false)}
                 >
                     Personal Details

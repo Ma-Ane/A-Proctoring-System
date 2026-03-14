@@ -1,6 +1,7 @@
 import React, { useState, useContext } from 'react'
 import { Link, useNavigate } from 'react-router-dom';
 import { UserContext } from '../UserContext';
+import Notification from './Notification';
 
 const MenuBar = () => {
     const { user, setUser, loading  } = useContext(UserContext);
@@ -48,10 +49,10 @@ const MenuBar = () => {
                     onClick={() => setIsNotification(false)}
                 >
                     <div 
-                        className='bg-primary text-white w-11/12 sm:w-2/3 md:w-1/3 h-1/2 rounded-3xl flex items-center justify-center z-10' 
+                        className='bg-primary text-white w-11/12 sm:w-2/3 md:w-1/3 h-fit rounded-3xl z-10' 
                         onClick={(e) => e.stopPropagation()}
                     >
-                    <p className='text-2xl'>Notification</p>
+                        <Notification />
                     </div>
                 </div>
         }

@@ -4,9 +4,7 @@ import numpy as np
 import time
 from collections import deque
 
-# =============================
 # INITIALIZATION
-# =============================
 mp_face_mesh = mp.solutions.face_mesh
 face_mesh = mp_face_mesh.FaceMesh(
     static_image_mode=False,
@@ -16,7 +14,6 @@ face_mesh = mp_face_mesh.FaceMesh(
     min_tracking_confidence=0.5
 )
 
-# cap = cv2.VideoCapture(0)
 
 # warning_count = 0
 MAX_WARNINGS = 5
@@ -36,9 +33,9 @@ RIGHT_THRESHOLD = 0.58  # Threshold for right gaze
 
 # startup = True
 
-# =============================
+
+
 # LANDMARK INDEXES
-# =============================
 NOSE_TIP = 1
 CHIN = 152
 LEFT_EYE = 33
@@ -67,9 +64,8 @@ SIDE_EYE_SCLERA = 0.22   # Windows
 # SIDE_EYE_SCLERA = 0.26   # macOS
 
 
-# =============================
+
 # HEAD POSE FUNCTION
-# =============================
 def sclera_ratio(landmarks, image_shape, state):
     global frame_count
     h, w = image_shape
@@ -328,12 +324,6 @@ def detect_gaze(img, state):
             f"Warnings={state['warning_count']}"
         )
         
-        # if warning_count >= MAX_WARNINGS:
-        #     print("❌ EXAM TERMINATED")
-        #     break
-        
-        # terminated = warning_count >= MAX_WARNINGS
-
 
     elif not results.multi_face_landmarks:
         gaze_state = "OFF_SCREEN"
@@ -349,13 +339,4 @@ def detect_gaze(img, state):
         sclera = 0.0
         side = "STRAIGHT"
             
-    # return 0.0, 0.0, "STRAIGHT", gaze_state, state["suspicion_score"], state["warning_count"]
-
     return relative_yaw, sclera, side, gaze_state, state["suspicion_score"], state["warning_count"]
-
-    # cv2.imshow("AI Proctoring System", frame)
-    # if cv2.waitKey(1) & 0xFF == 27:  # ESC key to exit
-    #     break
-
-# cap.release()
-# cv2.destroyAllWindows()

@@ -84,7 +84,7 @@ export default function StartExam() {
             try {
                 stream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
-                const audioContext = new AudioContext({ sampleRate: 32000 });
+                const audioContext = new AudioContext({ sampleRate: 16000 });
                 audioContextRef.current = audioContext;
 
                 const source = audioContext.createMediaStreamSource(stream);
@@ -101,11 +101,11 @@ export default function StartExam() {
                     // push samples
                     audioBufferRef.current.push(...input);
 
-                    // send every ~1 second (32000 samples)
-                    if (audioBufferRef.current.length >= 32000) {
-                        const chunk = audioBufferRef.current.slice(0, 32000);
-                        audioBufferRef.current = audioBufferRef.current.slice(32000);
+                    const CHUNK_SIZE = 16000 * 3; // 48,000 samples = 3 seconds
 
+                    if (audioBufferRef.current.length >= CHUNK_SIZE) {
+                        const chunk = audioBufferRef.current.slice(0, CHUNK_SIZE);     // ✅ take full 3 sec
+                        audioBufferRef.current = audioBufferRef.current.slice(CHUNK_SIZE); // ✅ discard correctly
                         sendAudioChunk(chunk);
                     }
                 };
@@ -281,8 +281,8 @@ export default function StartExam() {
         const ws = audioWsRef.current;
         if (!ws || ws.readyState !== 1) return;
 
-        // convert Float32 → Int16 (better for backend)
         const int16 = new Int16Array(chunk.length);
+
         for (let i = 0; i < chunk.length; i++) {
             int16[i] = Math.max(-1, Math.min(1, chunk[i])) * 32767;
         }

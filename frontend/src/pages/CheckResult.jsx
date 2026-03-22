@@ -359,13 +359,23 @@ export default function CheckResult() {
                       {violation.violation}
                     </p>
 
-                    {/* violations image  */}
-                    {violation.screenshot && (
+                    {/* violations image and audio  */}
+                    {violation.media && violation.type === "image" && (
                       <img
-                        src={`data:image/jpeg;base64,${violation.screenshot}`}
+                        src={`data:${violation.media.mime};base64,${violation.media.data}`}
                         alt="Violation Screenshot"
                         className="w-full rounded-md border"
                       />
+                    )}
+
+                    {violation.media && violation.type === "audio" && (
+                      <audio controls className="w-full mt-2">
+                        <source
+                          src={`data:${violation.media.mime};base64,${violation.media.data}`}
+                          type={violation.media.mime}
+                        />
+                        Your browser does not support the audio element.
+                      </audio>
                     )}
                   </div>
                 ))}

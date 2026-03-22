@@ -11,6 +11,24 @@ import torch
 import torch.nn.functional as F
 
 
+import wave
+import io
+
+def audio_np_to_wav_base64(audio_np: np.ndarray, sample_rate: int = 16000) -> str:
+    """Convert float32 numpy audio array to base64-encoded WAV bytes."""
+    pcm = (audio_np * 32767.0).astype(np.int16)
+
+    buffer = io.BytesIO()
+    with wave.open(buffer, 'wb') as wf:
+        wf.setnchannels(1)           # mono
+        wf.setsampwidth(2)           # 16-bit = 2 bytes
+        wf.setframerate(sample_rate) # 16000 Hz
+        wf.writeframes(pcm.tobytes())
+
+    buffer.seek(0)
+    return base64.b64encode(buffer.read()).decode("utf-8")
+
+
 # Custom file 
 from backend.ML_helper_function.faceVerification import load_face_verification_model, get_embedding, cosine_similarity
 from backend.ML_helper_function.multipleFaceDetection import load_yolo_model, detect_faces
@@ -313,9 +331,15 @@ async def proctor_ws(websocket: WebSocket, exam_id: str = Query(...), user_id: s
                         "examId": ObjectId(exam_id),
                         "userId": ObjectId(user_id),
                         "timestamp": now,
+                        "violation": violations,
                         "status": status,
-                        "screenshot": img_base64,
-                        "violation": violations
+
+                        "type": "image",
+
+                        "media": {
+                            "data": img_base64,
+                            "mime": "image/jpeg"
+                        }
                     }
 
                     flags_collection.insert_one(flag_doc)
@@ -340,24 +364,21 @@ async def audio_ws(websocket: WebSocket, exam_id: str = Query(...), user_id: str
         await websocket.send_json({"error": "Audio model not loaded"})
         return
 
-    # -------------------- ADD: Violation tracking --------------------
     last_audio_violation_time = 0
     VIOLATION_COOLDOWN = 3  # seconds
 
     try:
         while True:
-            # receive raw audio bytes
             data = await websocket.receive_bytes()
 
             print(f"🎧 Received audio chunk: {len(data)} bytes")
 
-            # convert Int16 → float32
+            # Convert Int16 → float32
             audio_np = np.frombuffer(data, dtype=np.int16).astype(np.float32)
-            audio_np = audio_np / 32768.0  # normalize to [-1, 1]
+            audio_np = audio_np / 32768.0
 
-            # safety check
-            if len(audio_np) != 32000:
-                print(f"⚠️ Unexpected audio chunk size: {len(audio_np)}")
+            if len(audio_np) < 16000:   # minimum 1 second (optional)
+                print("⚠️ Too small chunk")
                 continue
 
             now = time.time()
@@ -374,12 +395,10 @@ async def audio_ws(websocket: WebSocket, exam_id: str = Query(...), user_id: str
                 violations = "Silence"
 
             else:
-                # apply AGC
                 audio_np = apply_agc(audio_np)
 
                 print("Running audio inference...")
 
-                # run inference
                 result = run_audio_inference(pann_model, audio_np)
 
                 print("Prediction:", result)
@@ -389,7 +408,6 @@ async def audio_ws(websocket: WebSocket, exam_id: str = Query(...), user_id: str
                 silence = result.get("silence", 0.0)
 
                 THRESHOLD = 0.2
-
                 violations = None
 
                 if silence > THRESHOLD and speech < THRESHOLD and background < THRESHOLD:
@@ -401,16 +419,27 @@ async def audio_ws(websocket: WebSocket, exam_id: str = Query(...), user_id: str
                 elif background > THRESHOLD:
                     violations = "Background noise"
 
-            # -------------------- SAVE TO DB (LIKE IMAGE) --------------------
+            # -------------------- SAVE TO DB (UPDATED FORMAT) --------------------
             if violations and (now - last_audio_violation_time > VIOLATION_COOLDOWN):
                 try:
+                    # Convert audio to base64 (store raw chunk)
+                    audio_base64 = audio_np_to_wav_base64(audio_np)
+
+
                     flag_doc = {
                         "examId": ObjectId(exam_id),
                         "userId": ObjectId(user_id),
                         "timestamp": now,
                         "violation": violations,
-                        "audio_status": result,  # store model output
-                        "type": "audio"  # optional but useful for filtering
+
+                        "type": "audio",
+
+                        "media": {
+                            "data": audio_base64,
+                            "mime": "audio/wav"
+                        },
+
+                        "status": result   # optional but useful for frontend
                     }
 
                     flags_collection.insert_one(flag_doc)
@@ -422,8 +451,11 @@ async def audio_ws(websocket: WebSocket, exam_id: str = Query(...), user_id: str
                 except Exception as e:
                     print("⚠️ Failed to save audio violation:", e)
 
-            # -------------------- SEND RESULT TO FRONTEND --------------------
+            # -------------------- SEND RESULT --------------------
             await websocket.send_json(result)
 
     except Exception as e:
         print("🔴 Audio client disconnected:", e)
+
+
+

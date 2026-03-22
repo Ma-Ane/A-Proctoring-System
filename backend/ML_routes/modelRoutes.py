@@ -340,6 +340,10 @@ async def audio_ws(websocket: WebSocket, exam_id: str = Query(...), user_id: str
         await websocket.send_json({"error": "Audio model not loaded"})
         return
 
+    # -------------------- ADD: Violation tracking --------------------
+    last_audio_violation_time = 0
+    VIOLATION_COOLDOWN = 3  # seconds
+
     try:
         while True:
             # receive raw audio bytes
@@ -356,7 +360,9 @@ async def audio_ws(websocket: WebSocket, exam_id: str = Query(...), user_id: str
                 print(f"⚠️ Unexpected audio chunk size: {len(audio_np)}")
                 continue
 
-            # silence detection
+            now = time.time()
+
+            # -------------------- SILENCE DETECTION --------------------
             if is_silence(audio_np):
                 result = {
                     "speech": 0.0,
@@ -364,6 +370,9 @@ async def audio_ws(websocket: WebSocket, exam_id: str = Query(...), user_id: str
                     "silence": 1.0,
                     "event": "SILENCE"
                 }
+
+                violations = "Silence"
+
             else:
                 # apply AGC
                 audio_np = apply_agc(audio_np)
@@ -375,7 +384,45 @@ async def audio_ws(websocket: WebSocket, exam_id: str = Query(...), user_id: str
 
                 print("Prediction:", result)
 
-            # send result to frontend
+                speech = result.get("speech", 0.0)
+                background = result.get("background", 0.0)
+                silence = result.get("silence", 0.0)
+
+                THRESHOLD = 0.2
+
+                violations = None
+
+                if silence > THRESHOLD and speech < THRESHOLD and background < THRESHOLD:
+                    violations = "Silence"
+
+                elif speech > THRESHOLD:
+                    violations = "Speech detected"
+
+                elif background > THRESHOLD:
+                    violations = "Background noise"
+
+            # -------------------- SAVE TO DB (LIKE IMAGE) --------------------
+            if violations and (now - last_audio_violation_time > VIOLATION_COOLDOWN):
+                try:
+                    flag_doc = {
+                        "examId": ObjectId(exam_id),
+                        "userId": ObjectId(user_id),
+                        "timestamp": now,
+                        "violation": violations,
+                        "audio_status": result,  # store model output
+                        "type": "audio"  # optional but useful for filtering
+                    }
+
+                    flags_collection.insert_one(flag_doc)
+
+                    last_audio_violation_time = now
+
+                    print(f"📝 Audio violation saved: {violations}")
+
+                except Exception as e:
+                    print("⚠️ Failed to save audio violation:", e)
+
+            # -------------------- SEND RESULT TO FRONTEND --------------------
             await websocket.send_json(result)
 
     except Exception as e:

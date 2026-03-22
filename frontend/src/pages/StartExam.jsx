@@ -34,6 +34,7 @@ export default function StartExam() {
     const [tabViolation, setTabViolation] = useState("");
     const [questions, setQuestions] = useState([]);
     const [submitted, setSubmitted] = useState(null);
+    const [audioViolation, setAudioViolation] = useState("");
 
     useEffect(() => {
         setSelectedOption(null);
@@ -62,7 +63,7 @@ export default function StartExam() {
 
     // -------------------- START WEBCAM --------------------
     useEffect(() => {
-        enterFullScreen();
+        // enterFullScreen();
         let streamRef;
         navigator.mediaDevices.getUserMedia({ video: true })
             .then(stream => {
@@ -216,8 +217,38 @@ export default function StartExam() {
 
         ws.onopen = () => console.log("🎧 Audio WS connected");
         ws.onmessage = (event) => {
+            console.log("🔥 RAW AUDIO MESSAGE RECEIVED:", event.data);
             const data = JSON.parse(event.data);
-            console.log("Audio prediction:", data); // later we use this
+
+            console.log("Audio prediction:", data);
+
+            const speech = data.speech;
+            const background = data.background;
+            const silence = data.silence;
+
+            const THRESHOLD = 0.5;
+
+            // ✅ CASE 1: Only silence dominates → clear UI
+            if (silence > THRESHOLD && speech < THRESHOLD && background < THRESHOLD) {
+                setAudioViolation("Silence");
+                return;
+            }
+
+            // ✅ CASE 2: Speech or background detected
+            let violations = [];
+
+            if (speech > THRESHOLD) {
+                violations.push("Speech detected");
+            }
+
+            if (background > THRESHOLD) {
+                violations.push("Background noise detected");
+            }
+
+            // ✅ CASE 3: If any violation exists → show it
+            if (violations.length > 0) {
+                setAudioViolation(violations.join(" + "));
+            }
         };
         ws.onerror = (err) => console.error("Audio WS error:", err);
         ws.onclose = () => console.log("Audio WS closed");
@@ -394,7 +425,14 @@ export default function StartExam() {
                             {tabViolation || mlViolation}
                         </div>
                     )
-                    }
+                }
+                {
+                    audioViolation && (
+                        <div className="bg-yellow-500 p-2 mt-4 text-lg rounded-xl text-black">
+                            🎧 {audioViolation}
+                        </div>
+                    )
+                }
             </div>
 
             {/* SUBMITTED MESSAGE */}

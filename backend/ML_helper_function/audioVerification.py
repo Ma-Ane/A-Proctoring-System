@@ -2,6 +2,7 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 
+THRESHOLD = 0.2
 
 def rms_energy(x):
     return np.sqrt(np.mean(x ** 2) + 1e-8)
@@ -20,16 +21,16 @@ def apply_agc(x):
 
 
 def classify_audio(speech, background, silence):
-    if silence > 0.75:
+    if silence > THRESHOLD:
         return "SILENCE"
 
-    if speech > 0.75:
+    if speech > THRESHOLD:
         return "SPEECH"
 
     if speech > background * 1.3:
         return "TALKING"
 
-    if background > 0.6:
+    if background > THRESHOLD:
         return "NOISE"
 
     return "UNCERTAIN"
@@ -63,5 +64,5 @@ def run_audio_inference(pann_model, audio_np):
         "speech": float(speech),
         "background": float(background),
         "silence": float(silence),
-        "event": classify_audio(results)
+        "event": classify_audio(speech, background, silence)
     }

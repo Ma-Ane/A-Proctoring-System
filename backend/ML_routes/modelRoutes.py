@@ -29,6 +29,20 @@ def audio_np_to_wav_base64(audio_np: np.ndarray, sample_rate: int = 16000) -> st
     return base64.b64encode(buffer.read()).decode("utf-8")
 
 
+from scipy.signal import resample_poly
+import math
+
+def resample_to_16k(audio_np: np.ndarray, original_sr: int) -> np.ndarray:
+    if original_sr == 16000:
+        return audio_np
+    # resample_poly uses integer ratios — cleaner than naive resample
+    gcd = math.gcd(16000, original_sr)
+    up = 16000 // gcd
+    down = original_sr // gcd
+    return resample_poly(audio_np, up, down).astype(np.float32)
+
+
+
 # Custom file 
 from backend.ML_helper_function.faceVerification import load_face_verification_model, get_embedding, cosine_similarity
 from backend.ML_helper_function.multipleFaceDetection import load_yolo_model, detect_faces
@@ -366,16 +380,36 @@ async def audio_ws(websocket: WebSocket, exam_id: str = Query(...), user_id: str
 
     last_audio_violation_time = 0
     VIOLATION_COOLDOWN = 3  # seconds
+    client_sample_rate = 48000  # safe default until client sends init
 
     try:
         while True:
-            data = await websocket.receive_bytes()
+            message = await websocket.receive()
+
+            # -------------------- HANDLE INIT MESSAGE (sample rate) --------------------
+            if "text" in message:
+                try:
+                    init_data = json.loads(message["text"])
+                    if init_data.get("type") == "init":
+                        client_sample_rate = init_data["sampleRate"]
+                        print(f"🎧 Client sample rate set to: {client_sample_rate}")
+                except Exception as e:
+                    print("⚠️ Failed to parse init message:", e)
+                continue
+
+            # -------------------- HANDLE BINARY AUDIO --------------------
+            data = message.get("bytes")
+            if not data:
+                continue
 
             print(f"🎧 Received audio chunk: {len(data)} bytes")
 
             # Convert Int16 → float32
             audio_np = np.frombuffer(data, dtype=np.int16).astype(np.float32)
             audio_np = audio_np / 32768.0
+
+            # ✅ Resample from client's native rate to 16000Hz properly
+            audio_np = resample_to_16k(audio_np, client_sample_rate)
 
             if len(audio_np) < 16000:   # minimum 1 second (optional)
                 print("⚠️ Too small chunk")
@@ -392,7 +426,7 @@ async def audio_ws(websocket: WebSocket, exam_id: str = Query(...), user_id: str
                     "event": "SILENCE"
                 }
 
-                violations = "Silence"
+                violations = None  # ✅ silence is not a violation, do not save
 
             else:
                 audio_np = apply_agc(audio_np)
@@ -410,21 +444,20 @@ async def audio_ws(websocket: WebSocket, exam_id: str = Query(...), user_id: str
                 THRESHOLD = 0.2
                 violations = None
 
-                if silence > THRESHOLD and speech < THRESHOLD and background < THRESHOLD:
-                    violations = "Silence"
-
-                elif speech > THRESHOLD:
+                # ✅ Only flag actual violations, skip silence entirely
+                if speech > THRESHOLD:
                     violations = "Speech detected"
-
                 elif background > THRESHOLD:
                     violations = "Background noise"
+                # silence → violations stays None → nothing saved ✅
+
+                # The save block stays the same — it only fires if violations is not None
 
             # -------------------- SAVE TO DB (UPDATED FORMAT) --------------------
             if violations and (now - last_audio_violation_time > VIOLATION_COOLDOWN):
                 try:
                     # Convert audio to base64 (store raw chunk)
                     audio_base64 = audio_np_to_wav_base64(audio_np)
-
 
                     flag_doc = {
                         "examId": ObjectId(exam_id),
@@ -456,6 +489,5 @@ async def audio_ws(websocket: WebSocket, exam_id: str = Query(...), user_id: str
 
     except Exception as e:
         print("🔴 Audio client disconnected:", e)
-
 
 

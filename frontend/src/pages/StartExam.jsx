@@ -84,7 +84,8 @@ export default function StartExam() {
             try {
                 stream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
-                const audioContext = new AudioContext({ sampleRate: 16000 });
+                // ✅ No sampleRate override — let browser use native rate (44100 or 48000)
+                const audioContext = new AudioContext();
                 audioContextRef.current = audioContext;
 
                 const source = audioContext.createMediaStreamSource(stream);
@@ -101,11 +102,12 @@ export default function StartExam() {
                     // push samples
                     audioBufferRef.current.push(...input);
 
-                    const CHUNK_SIZE = 16000 * 3; // 48,000 samples = 3 seconds
+                    // ✅ 3 seconds at native sample rate (e.g. 48000 * 3 = 144,000)
+                    const CHUNK_SIZE = audioContext.sampleRate * 3;
 
                     if (audioBufferRef.current.length >= CHUNK_SIZE) {
-                        const chunk = audioBufferRef.current.slice(0, CHUNK_SIZE);     // ✅ take full 3 sec
-                        audioBufferRef.current = audioBufferRef.current.slice(CHUNK_SIZE); // ✅ discard correctly
+                        const chunk = audioBufferRef.current.slice(0, CHUNK_SIZE);
+                        audioBufferRef.current = audioBufferRef.current.slice(CHUNK_SIZE);
                         sendAudioChunk(chunk);
                     }
                 };
@@ -215,7 +217,17 @@ export default function StartExam() {
         const ws = new WebSocket(`ws://127.0.0.1:8000/ws/audio?exam_id=${examId}&user_id=${user._id}`);
         audioWsRef.current = ws;
 
-        ws.onopen = () => console.log("🎧 Audio WS connected");
+        ws.onopen = () => {
+            console.log("🎧 Audio WS connected");
+            // ✅ Send sample rate to backend so it can resample correctly
+            // audioContextRef is accessible here since it's set in the mic useEffect above
+            if (audioContextRef.current) {
+                ws.send(JSON.stringify({
+                    type: "init",
+                    sampleRate: audioContextRef.current.sampleRate
+                }));
+            }
+        };
         ws.onmessage = (event) => {
             console.log("🔥 RAW AUDIO MESSAGE RECEIVED:", event.data);
             const data = JSON.parse(event.data);
@@ -228,9 +240,9 @@ export default function StartExam() {
 
             const THRESHOLD = 0.5;
 
-            // ✅ CASE 1: Only silence dominates → clear UI
+            // ✅ Silence detected → clear UI, do not show anything
             if (silence > THRESHOLD && speech < THRESHOLD && background < THRESHOLD) {
-                setAudioViolation("Silence");
+                setAudioViolation("");
                 return;
             }
 

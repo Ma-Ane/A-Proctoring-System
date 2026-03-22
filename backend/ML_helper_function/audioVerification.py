@@ -12,12 +12,16 @@ def is_silence(x):
 
 def apply_agc(x):
     rms = rms_energy(x)
-
-    if rms < 0.01:
-        gain = min(0.03 / (rms + 1e-8), 10.0)
-        x = x * gain
-
-    return np.clip(x, -1.0, 1.0)
+    if rms < 1e-6:
+        return x  # truly silent, don't touch it
+    
+    TARGET_RMS = 0.1
+    gain = min(TARGET_RMS / rms, 3.0)  # ✅ max 3x gain, not 10x
+    x = x * gain
+    
+    # ✅ soft limiting instead of hard clip — no distortion
+    x = np.tanh(x)
+    return x
 
 
 def classify_audio(speech, background, silence):

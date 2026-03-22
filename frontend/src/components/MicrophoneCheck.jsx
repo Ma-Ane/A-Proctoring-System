@@ -27,16 +27,27 @@ const MicrophoneCheck = ({ micVerified, setMicVerified, setIsMicAvailable }) => 
 
   const stopCheck = () => {
     // Stop animation
-    cancelAnimationFrame(animationRef.current);
+    if (animationRef.current) {
+      cancelAnimationFrame(animationRef.current);
+      animationRef.current = null;
+    }
 
-    // Stop audio context
+    // Stop audio context (SAFE CHECK ADDED)
     if (audioCtxRef.current) {
-      try { audioCtxRef.current.close(); } catch {}
+      if (audioCtxRef.current.state !== "closed") {
+        try {
+          audioCtxRef.current.close();
+        } catch (err) {
+          console.warn("AudioContext already closed or failed:", err);
+        }
+      }
+      audioCtxRef.current = null;
     }
 
     // Stop microphone tracks
     if (streamRef.current) {
       streamRef.current.getTracks().forEach((t) => t.stop());
+      streamRef.current = null;
     }
 
     // console.log("🎤 Microphone check stopped — verification complete.");

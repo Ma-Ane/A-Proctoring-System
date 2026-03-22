@@ -7,12 +7,15 @@ import numpy as np
 from dotenv import load_dotenv
 from bson import ObjectId
 import json
+import torch
+import torch.nn.functional as F
 
 
 # Custom file 
 from backend.ML_helper_function.faceVerification import load_face_verification_model, get_embedding, cosine_similarity
 from backend.ML_helper_function.multipleFaceDetection import load_yolo_model, detect_faces
 from backend.ML_helper_function.gazeDetection import detect_gaze
+from backend.ML_helper_function.audioVerification import rms_energy, is_silence, apply_agc, run_audio_inference
 
 app = FastAPI()
 
@@ -41,6 +44,7 @@ def root():
     
 model = None 
 yolo_model = None
+pann_model = None
 
 
 # to check the mongo db connection for saving flags
@@ -69,6 +73,31 @@ def startup():
     
     except Exception as e: 
         print("❌ Error loading models:", e)
+
+# load the pann model on start
+@app.on_event("startup")
+def load_pann_model():
+    global pann_model
+
+    try:
+        print("🔵 Loading PANN audio model...")
+
+        from backend.ML_helper_function.pannModel import PANNClassifier
+
+        MODEL_PATH = "backend/ML_models/pann_finetuned_v6_final.pth"
+        DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+
+        pann_model = PANNClassifier()
+        state = torch.load(MODEL_PATH, map_location=DEVICE)
+        pann_model.load_state_dict(state)
+        pann_model.to(DEVICE)
+        pann_model.eval()
+
+        print("✅ PANN model loaded successfully")
+
+    except Exception as e:
+        print("❌ Error loading PANN model:", e)
+
 
 @app.post('/register-user')
 async def register_user(hd_image: UploadFile = File(...)):
@@ -141,7 +170,8 @@ async def check_verification(user_image_embedding: str = Form(...), webcam_image
     
     except Exception as e:
         return {"error": str(e)}
-    
+
+# websocket for the image processing    
 @app.websocket("/ws/proctor")
 async def proctor_ws(websocket: WebSocket, exam_id: str = Query(...), user_id: str = Query(...)):
     await websocket.accept()
@@ -297,3 +327,56 @@ async def proctor_ws(websocket: WebSocket, exam_id: str = Query(...), user_id: s
     except Exception as e:
         print("🔴 Client disconnected:", e)
         # await websocket.close()
+
+# websocket for audio 
+@app.websocket("/ws/audio")
+async def audio_ws(websocket: WebSocket, exam_id: str = Query(...), user_id: str = Query(...)):
+    await websocket.accept()
+    print("🎧 Audio client connected")
+
+    global pann_model
+
+    if pann_model is None:
+        await websocket.send_json({"error": "Audio model not loaded"})
+        return
+
+    try:
+        while True:
+            # receive raw audio bytes
+            data = await websocket.receive_bytes()
+
+            print(f"🎧 Received audio chunk: {len(data)} bytes")
+
+            # convert Int16 → float32
+            audio_np = np.frombuffer(data, dtype=np.int16).astype(np.float32)
+            audio_np = audio_np / 32768.0  # normalize to [-1, 1]
+
+            # safety check
+            if len(audio_np) != 32000:
+                print(f"⚠️ Unexpected audio chunk size: {len(audio_np)}")
+                continue
+
+            # silence detection
+            if is_silence(audio_np):
+                result = {
+                    "speech": 0.0,
+                    "background": 0.0,
+                    "silence": 1.0,
+                    "event": "SILENCE"
+                }
+            else:
+                # apply AGC
+                audio_np = apply_agc(audio_np)
+
+                print("Running audio inference...")
+
+                # run inference
+                result = run_audio_inference(pann_model, audio_np)
+
+                print("Prediction:", result)
+
+            # send result to frontend
+            await websocket.send_json(result)
+
+    except Exception as e:
+        print("🔴 Audio client disconnected:", e)

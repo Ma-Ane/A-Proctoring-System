@@ -42,6 +42,15 @@ const TakeExam = () => {
     // to check if the user has accepted the terms 
     const [isAccepted, setIsAccepted] = useState(false)
 
+    // enter full screen when starting the examm
+    function enterFullScreen() {
+        const elem = document.documentElement;
+        if (elem.requestFullscreen) elem.requestFullscreen();
+        else if (elem.mozRequestFullScreen) elem.mozRequestFullScreen();
+        else if (elem.webkitRequestFullscreen) elem.webkitRequestFullscreen();
+        else if (elem.msRequestFullscreen) elem.msRequestFullscreen();
+    }
+
     // to set all the variables to default when mounting the component
     useEffect(() => {
         if (page === 2 && user) {
@@ -266,7 +275,7 @@ const TakeExam = () => {
 
                         <p className="mt-4 text-lg text-gray-700">
                             {
-                                !micVerified ? 
+                                micVerified ? 
                                     "✅ Microphone verified! You can proceed."
                                 : 
                                     isMicAvailable ? 
@@ -277,10 +286,11 @@ const TakeExam = () => {
                         </p>
 
                         {
-                            !micVerified ? 
+                            micVerified ? 
                                 <Link to={`/start-exam/${examId}?title=${encodeURIComponent(title)}`}>
                                     <button 
                                         className='mt-24 text-2xl bg-primary p-4 rounded-xl text-white hover:cursor-pointer profile__card'
+                                        onClick={enterFullScreen}
                                     >
                                         Start Exam
                                     </button>

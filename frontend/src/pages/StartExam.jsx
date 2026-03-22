@@ -16,6 +16,13 @@ export default function StartExam() {
     const canvasRef = useRef(null);
     const wsRef = useRef(null);
 
+    // references for audio model
+    const audioContextRef = useRef(null);
+    const processorRef = useRef(null);
+    const audioWsRef = useRef(null);
+    const audioBufferRef = useRef([]);
+
+
     // cooldown tracker for each violation
     const violationCooldownRef = useRef({});
     const COOLDOWN_MS = 5000; // 5 seconds
@@ -46,14 +53,6 @@ export default function StartExam() {
 
 
     // -------------------- FULLSCREEN FUNCTIONS --------------------
-    function enterFullScreen() {
-        const elem = document.documentElement;
-        if (elem.requestFullscreen) elem.requestFullscreen();
-        else if (elem.mozRequestFullScreen) elem.mozRequestFullScreen();
-        else if (elem.webkitRequestFullscreen) elem.webkitRequestFullscreen();
-        else if (elem.msRequestFullscreen) elem.msRequestFullscreen();
-    }
-
     function exitFullScreen() {
         if (document.exitFullscreen) document.exitFullscreen();
         else if (document.mozCancelFullScreen) document.mozCancelFullScreen();
@@ -73,6 +72,54 @@ export default function StartExam() {
             .catch(err => console.error("Camera error:", err));
         return () => {
             if (streamRef) streamRef.getTracks().forEach(track => track.stop());
+        };
+    }, []);
+
+    // ------------- START MICROPHONE --------
+    useEffect(() => {
+        let stream;
+
+        const initAudio = async () => {
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+                const audioContext = new AudioContext({ sampleRate: 32000 });
+                audioContextRef.current = audioContext;
+
+                const source = audioContext.createMediaStreamSource(stream);
+
+                const processor = audioContext.createScriptProcessor(4096, 1, 1);
+                processorRef.current = processor;
+
+                source.connect(processor);
+                processor.connect(audioContext.destination);
+
+                processor.onaudioprocess = (event) => {
+                    const input = event.inputBuffer.getChannelData(0);
+
+                    // push samples
+                    audioBufferRef.current.push(...input);
+
+                    // send every ~1 second (32000 samples)
+                    if (audioBufferRef.current.length >= 32000) {
+                        const chunk = audioBufferRef.current.slice(0, 32000);
+                        audioBufferRef.current = audioBufferRef.current.slice(32000);
+
+                        sendAudioChunk(chunk);
+                    }
+                };
+
+            } catch (err) {
+                console.error("Mic error:", err);
+            }
+        };
+
+        initAudio();
+
+        return () => {
+            if (processorRef.current) processorRef.current.disconnect();
+            if (audioContextRef.current) audioContextRef.current.close();
+            if (stream) stream.getTracks().forEach(track => track.stop());
         };
     }, []);
 
@@ -139,11 +186,12 @@ export default function StartExam() {
         };
     }, []);
 
-    // -------------------- WEBSOCKET --------------------
+    // -------------------- IMAGE WEBSOCKET --------------------
     useEffect(() => {
         if (!examId || !user._id) return console.error("Missing examId or userId for WebSocket");
         const wsUrl = `${WS_BASE_URL}?exam_id=${encodeURIComponent(examId)}&user_id=${encodeURIComponent(user._id)}`;
         const ws = new WebSocket(wsUrl);
+        if (wsRef.current) return; // 🚀 prevent duplicate connections
         wsRef.current = ws;
 
         ws.onopen = () => console.log("WebSocket connected");
@@ -159,7 +207,27 @@ export default function StartExam() {
         };
     }, [examId, user]);
 
-    // -------------------- SEND FRAMES --------------------
+    // -------------------- AUDIO WEBSOCKET --------------------
+    useEffect(() => {
+        if (!examId || !user._id) return;
+
+        const ws = new WebSocket(`ws://127.0.0.1:8000/ws/audio?exam_id=${examId}&user_id=${user._id}`);
+        audioWsRef.current = ws;
+
+        ws.onopen = () => console.log("🎧 Audio WS connected");
+        ws.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            console.log("Audio prediction:", data); // later we use this
+        };
+        ws.onerror = (err) => console.error("Audio WS error:", err);
+        ws.onclose = () => console.log("Audio WS closed");
+
+        return () => {
+            if (ws.readyState === WebSocket.OPEN) ws.close();
+        };
+    }, [examId, user]);
+
+    // -------------------- SEND IMG FRAMES --------------------
     useEffect(() => {
         const sendFrame = () => {
             const video = videoRef.current;
@@ -176,6 +244,20 @@ export default function StartExam() {
         const interval = setInterval(sendFrame, 300);
         return () => clearInterval(interval);
     }, []);
+
+    // --------------- SEND AUDIO FRAME ----------------
+    const sendAudioChunk = (chunk) => {
+        const ws = audioWsRef.current;
+        if (!ws || ws.readyState !== 1) return;
+
+        // convert Float32 → Int16 (better for backend)
+        const int16 = new Int16Array(chunk.length);
+        for (let i = 0; i < chunk.length; i++) {
+            int16[i] = Math.max(-1, Math.min(1, chunk[i])) * 32767;
+        }
+
+        ws.send(int16.buffer);
+    };
 
     // -------------------- FETCH QUESTIONS --------------------
     useEffect(() => {

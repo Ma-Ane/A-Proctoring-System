@@ -429,7 +429,7 @@ async def audio_ws(websocket: WebSocket, exam_id: str = Query(...), user_id: str
                 violations = None  # ✅ silence is not a violation, do not save
 
             else:
-                audio_np = apply_agc(audio_np)
+                # audio_np = apply_agc(audio_np)
 
                 print("Running audio inference...")
 

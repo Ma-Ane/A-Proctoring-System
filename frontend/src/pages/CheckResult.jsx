@@ -133,7 +133,7 @@ export default function CheckResult() {
     }
 
     const hasUngraded = selectedExamResults.some(
-      (result) => result.score === 0 || result.score === null || result.score === undefined
+      (result) => result.score === -10 || result.score === null || result.score === undefined
     );
 
     setIsUngraded(hasUngraded);

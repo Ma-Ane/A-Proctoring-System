@@ -57,5 +57,40 @@ router.delete('/delete_violation/:violationId', async (req, res) => {
   }
 });
 
+// save audio violation clip sent from frontend when violation ends
+router.post('/save_audio_violation', async (req, res) => {
+  try {
+    const { examId, userId, violation, audio_base64, duration, timestamp } = req.body;
+
+    // Validate IDs
+    if (!mongoose.Types.ObjectId.isValid(examId) || !mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({ error: "Invalid examId or userId" });
+    }
+
+    const flag = new Flag({
+      examId,
+      userId,
+      timestamp,
+      violation,
+      type: 'audio',
+      media: {
+        data: audio_base64,
+        mime: 'audio/wav'
+      },
+      duration
+    });
+
+    await flag.save();
+
+    console.log(`📝 Audio violation saved: ${violation} (${duration}s)`);
+
+    res.status(201).json({ success: true });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 
 module.exports = router;

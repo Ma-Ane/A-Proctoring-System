@@ -378,8 +378,6 @@ async def audio_ws(websocket: WebSocket, exam_id: str = Query(...), user_id: str
         await websocket.send_json({"error": "Audio model not loaded"})
         return
 
-    last_audio_violation_time = 0
-    VIOLATION_COOLDOWN = 3  # seconds
     client_sample_rate = 48000  # safe default until client sends init
 
     try:
@@ -415,8 +413,6 @@ async def audio_ws(websocket: WebSocket, exam_id: str = Query(...), user_id: str
                 print("⚠️ Too small chunk")
                 continue
 
-            now = time.time()
-
             # -------------------- SILENCE DETECTION --------------------
             if is_silence(audio_np):
                 result = {
@@ -426,68 +422,16 @@ async def audio_ws(websocket: WebSocket, exam_id: str = Query(...), user_id: str
                     "event": "SILENCE"
                 }
 
-                violations = None  # ✅ silence is not a violation, do not save
-
             else:
-                # audio_np = apply_agc(audio_np)
-
                 print("Running audio inference...")
 
                 result = run_audio_inference(pann_model, audio_np)
 
                 print("Prediction:", result)
 
-                speech = result.get("speech", 0.0)
-                background = result.get("background", 0.0)
-                silence = result.get("silence", 0.0)
-
-                THRESHOLD = 0.2
-                violations = None
-
-                # ✅ Only flag actual violations, skip silence entirely
-                if speech > THRESHOLD:
-                    violations = "Speech detected"
-                elif background > THRESHOLD:
-                    violations = "Background noise"
-                # silence → violations stays None → nothing saved ✅
-
-                # The save block stays the same — it only fires if violations is not None
-
-            # -------------------- SAVE TO DB (UPDATED FORMAT) --------------------
-            if violations and (now - last_audio_violation_time > VIOLATION_COOLDOWN):
-                try:
-                    # Convert audio to base64 (store raw chunk)
-                    audio_base64 = audio_np_to_wav_base64(audio_np)
-
-                    flag_doc = {
-                        "examId": ObjectId(exam_id),
-                        "userId": ObjectId(user_id),
-                        "timestamp": now,
-                        "violation": violations,
-
-                        "type": "audio",
-
-                        "media": {
-                            "data": audio_base64,
-                            "mime": "audio/wav"
-                        },
-
-                        "status": result   # optional but useful for frontend
-                    }
-
-                    flags_collection.insert_one(flag_doc)
-
-                    last_audio_violation_time = now
-
-                    print(f"📝 Audio violation saved: {violations}")
-
-                except Exception as e:
-                    print("⚠️ Failed to save audio violation:", e)
-
-            # -------------------- SEND RESULT --------------------
+            # -------------------- SEND RESULT (saving handled via POST /audio/save_violation) --------------------
             await websocket.send_json(result)
 
     except Exception as e:
         print("🔴 Audio client disconnected:", e)
-
 

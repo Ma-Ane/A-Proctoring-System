@@ -15,8 +15,8 @@ class AudioProcessor extends AudioWorkletProcessor {
             this._buffer.push(samples[i]);
         }
 
-        // ✅ use AudioWorkletGlobalScope's sampleRate — works for any browser rate
-        const CHUNK_SIZE = sampleRate * 3;
+        // ✅ 1 second chunks for fast violation detection
+        const CHUNK_SIZE = sampleRate * 1;
 
         if (this._buffer.length >= CHUNK_SIZE) {
             const chunk = this._buffer.slice(0, CHUNK_SIZE);

@@ -17,7 +17,9 @@ const flagSchema = new mongoose.Schema({
   media: {
     data: { type: String },      // base64
     mime: { type: String }       // image/jpeg or audio/wav
-  }
+  },
+
+  duration: { type: Number }     // total seconds of the audio violation clip (audio type only)
 
 }, { timestamps: true });
 

@@ -369,13 +369,21 @@ export default function CheckResult() {
                     )}
 
                     {violation.media && violation.type === "audio" && (
-                      <audio controls className="w-full mt-2">
-                        <source
-                          src={`data:${violation.media.mime};base64,${violation.media.data}`}
-                          type={violation.media.mime}
-                        />
-                        Your browser does not support the audio element.
-                      </audio>
+                      <div>
+                        {/* duration of the audio violation clip */}
+                        {violation.duration && (
+                          <p className="text-gray-500 text-sm mb-1">
+                            Duration: {violation.duration}s
+                          </p>
+                        )}
+                        <audio controls className="w-full mt-2">
+                          <source
+                            src={`data:${violation.media.mime};base64,${violation.media.data}`}
+                            type={violation.media.mime}
+                          />
+                          Your browser does not support the audio element.
+                        </audio>
+                      </div>
                     )}
                   </div>
                 ))}

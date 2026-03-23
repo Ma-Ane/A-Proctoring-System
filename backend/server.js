@@ -24,8 +24,10 @@ const corsOptions = {
 
 // Apply CORS for all routes
 app.use(cors(corsOptions));
-app.use(express.json());
+// for size limit of audio clips
+app.use(express.json({ limit: "50mb" }))
 app.use(cookieParser());
+
 
 
 // created test routes

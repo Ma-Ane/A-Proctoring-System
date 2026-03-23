@@ -20,7 +20,6 @@ export default function StartExam() {
     const audioContextRef = useRef(null);
     const processorRef = useRef(null);
     const audioWsRef = useRef(null);
-    const audioBufferRef = useRef([]);
 
 
     // cooldown tracker for each violation
@@ -84,33 +83,28 @@ export default function StartExam() {
             try {
                 stream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
-                // ✅ No sampleRate override — let browser use native rate (44100 or 48000)
+                // ✅ Native rate, no override
                 const audioContext = new AudioContext();
                 audioContextRef.current = audioContext;
 
+                console.log("🎧 Actual browser sample rate:", audioContext.sampleRate);
+
+                // ✅ AudioWorklet runs on dedicated audio thread — no glitches unlike ScriptProcessor
+                await audioContext.audioWorklet.addModule("/audioProcessor.js");
+
                 const source = audioContext.createMediaStreamSource(stream);
+                const workletNode = new AudioWorkletNode(audioContext, "audioProcessor");
+                processorRef.current = workletNode;
 
-                const processor = audioContext.createScriptProcessor(4096, 1, 1);
-                processorRef.current = processor;
-
-                source.connect(processor);
-                processor.connect(audioContext.destination);
-
-                processor.onaudioprocess = (event) => {
-                    const input = event.inputBuffer.getChannelData(0);
-
-                    // push samples
-                    audioBufferRef.current.push(...input);
-
-                    // ✅ 3 seconds at native sample rate (e.g. 48000 * 3 = 144,000)
-                    const CHUNK_SIZE = audioContext.sampleRate * 3;
-
-                    if (audioBufferRef.current.length >= CHUNK_SIZE) {
-                        const chunk = audioBufferRef.current.slice(0, CHUNK_SIZE);
-                        audioBufferRef.current = audioBufferRef.current.slice(CHUNK_SIZE);
-                        sendAudioChunk(chunk);
+                // ✅ Receive chunks from worklet and send to backend
+                workletNode.port.onmessage = (event) => {
+                    if (event.data.type === "chunk") {
+                        sendAudioChunk(event.data.samples);
                     }
                 };
+
+                source.connect(workletNode);
+                workletNode.connect(audioContext.destination);
 
             } catch (err) {
                 console.error("Mic error:", err);
@@ -219,14 +213,11 @@ export default function StartExam() {
 
         ws.onopen = () => {
             console.log("🎧 Audio WS connected");
-            // ✅ Send sample rate to backend so it can resample correctly
-            // audioContextRef is accessible here since it's set in the mic useEffect above
-            if (audioContextRef.current) {
-                ws.send(JSON.stringify({
-                    type: "init",
-                    sampleRate: audioContextRef.current.sampleRate
-                }));
-            }
+            // ✅ Hardcoded 48000 — confirmed from browser, avoids race condition with mic useEffect
+            ws.send(JSON.stringify({
+                type: "init",
+                sampleRate: 48000
+            }));
         };
         ws.onmessage = (event) => {
             console.log("🔥 RAW AUDIO MESSAGE RECEIVED:", event.data);

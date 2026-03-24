@@ -435,3 +435,40 @@ async def audio_ws(websocket: WebSocket, exam_id: str = Query(...), user_id: str
     except Exception as e:
         print("🔴 Audio client disconnected:", e)
 
+
+# for the periodic verification of user during exam
+@app.post('/save-verification-flag')
+async def save_verification_flag(
+    examId: str = Form(...),
+    userId: str = Form(...),
+    violation: str = Form(...),
+    webcam_image: UploadFile = File(...)
+):
+    try:
+        now = time.time()
+
+        img_bytes = await webcam_image.read()
+        img = Image.open(io.BytesIO(img_bytes)).convert("RGB")
+
+        img_buffer = io.BytesIO()
+        img.save(img_buffer, format="JPEG")
+        img_base64 = base64.b64encode(img_buffer.getvalue()).decode("utf-8")
+
+        flag_doc = {
+            "examId": ObjectId(examId),
+            "userId": ObjectId(userId),
+            "timestamp": now,
+            "violation": violation,
+            "type": "image",
+            "media": {
+                "data": img_base64,
+                "mime": "image/jpeg"
+            }
+        }
+
+        flags_collection.insert_one(flag_doc)
+
+        return {"message": "Verification flag saved successfully"}
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

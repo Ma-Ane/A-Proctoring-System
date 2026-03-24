@@ -376,6 +376,101 @@ export default function StartExam() {
         };
     }, [examId, user]);
 
+
+    // -------------------- PERIODIC IDENTITY VERIFICATION --------------------
+    useEffect(() => {
+        if (!examId || !user?._id || !user?.email) return;
+
+        let intervalId = null;
+
+        const verifyIdentity = async () => {
+            const video = videoRef.current;
+            const canvas = canvasRef.current;
+            if (!video || !canvas) return;
+
+            // Capture frame from webcam
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            const ctx = canvas.getContext("2d");
+            ctx.drawImage(video, 0, 0);
+            const dataUrl = canvas.toDataURL("image/jpeg", 0.6);
+            const blob = await fetch(dataUrl).then(r => r.blob());
+
+            // Fetch user embedding
+            let embedding;
+            try {
+                const res = await fetch(`http://localhost:3000/api/auth/get_embedding/${user.email}`);
+                embedding = await res.json();
+            } catch (err) {
+                console.error("Failed to fetch embedding:", err);
+                return;
+            }
+
+            // Build FormData for verification
+            const formData = new FormData();
+            formData.append("user_image_embedding", JSON.stringify(embedding));
+            formData.append("webcam_image", blob, "webcam_image.jpg");
+
+            // Call verification API
+            try {
+                const response = await fetch("http://127.0.0.1:8000/check-verification", {
+                    method: "POST",
+                    body: formData
+                });
+                const data = await response.json();
+
+                if (data.error) {
+                    console.error("Verification error:", data.error);
+                } else if (data.message === "Same person") {
+                    console.log("Identity verified: Same person");
+                } else if (data.message === "Different person") {
+                    console.warn(" Identity mismatch: Different person detected");
+                } else {
+                    console.warn("Unexpected verification response:", data.message);
+                }
+
+                // Save flag if mismatch or error
+                if (data.message === "Different person" || data.error) {
+                    const violation = data.error
+                        ? `Verification error: ${data.error}`
+                        : "Identity mismatch";
+
+                    const flagFormData = new FormData();
+                    flagFormData.append("examId", examId);
+                    flagFormData.append("userId", user._id);
+                    flagFormData.append("violation", violation);
+                    flagFormData.append("webcam_image", blob, "webcam_image.jpg");
+
+                    try {
+                        await fetch("http://127.0.0.1:8000/save-verification-flag", {
+                            method: "POST",
+                            body: flagFormData
+                        });
+                        console.log("Verification flag saved:", violation);
+                    } catch (err) {
+                        console.error("Failed to save verification flag:", err);
+                    }
+                }
+
+            } catch (err) {
+                console.error("Verification API error:", err);
+            }
+        };
+
+        // Wait 10s initially, then verify every 5s
+        const timeoutId = setTimeout(() => {
+            verifyIdentity();
+            intervalId = setInterval(verifyIdentity, 5000);
+        }, 10000);
+
+        return () => {
+            clearTimeout(timeoutId);
+            if (intervalId) clearInterval(intervalId);
+        };
+
+    }, [examId, user]);
+    
+
     // -------------------- SEND IMG FRAMES --------------------
     useEffect(() => {
         const sendFrame = () => {

@@ -34,6 +34,9 @@ export default function StartExam() {
     const [submitted, setSubmitted] = useState(null);
     const [audioViolation, setAudioViolation] = useState("");
 
+    // allow a certain key to exitt full screen
+    const allowExit = useRef(false); // ← add this line
+
     useEffect(() => {
         setSelectedOption(null);
     }, [currentIndex]);
@@ -81,20 +84,20 @@ export default function StartExam() {
             try {
                 stream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
-                // ✅ Native rate, no override
+                // Native rate, no override
                 const audioContext = new AudioContext();
                 audioContextRef.current = audioContext;
 
                 console.log("🎧 Actual browser sample rate:", audioContext.sampleRate);
 
-                // ✅ AudioWorklet runs on dedicated audio thread — no glitches unlike ScriptProcessor
+                // AudioWorklet runs on dedicated audio thread — no glitches unlike ScriptProcessor
                 await audioContext.audioWorklet.addModule("/audioProcessor.js");
 
                 const source = audioContext.createMediaStreamSource(stream);
                 const workletNode = new AudioWorkletNode(audioContext, "audioProcessor");
                 processorRef.current = workletNode;
 
-                // ✅ Receive chunks from worklet and send to backend
+                // Receive chunks from worklet and send to backend
                 workletNode.port.onmessage = (event) => {
                     if (event.data.type === "chunk") {
                         sendAudioChunk(event.data.samples);
@@ -122,22 +125,32 @@ export default function StartExam() {
     useEffect(() => {
         const handleFullScreenChange = () => {
             const elem = document.documentElement;
-            if (!document.fullscreenElement) {
+            if (!document.fullscreenElement && !allowExit.current) {
                 if (elem.requestFullscreen) elem.requestFullscreen();
                 else if (elem.mozRequestFullScreen) elem.mozRequestFullScreen();
                 else if (elem.webkitRequestFullscreen) elem.webkitRequestFullscreen();
                 else if (elem.msRequestFullscreen) elem.msRequestFullscreen();
             }
         };
+
+        const handleKeyDown = (e) => {
+            if (e.key === "q" || e.key === "Q") {
+                allowExit.current = true;
+                exitFullScreen();
+            }
+        };
+
         document.addEventListener("fullscreenchange", handleFullScreenChange);
         document.addEventListener("webkitfullscreenchange", handleFullScreenChange);
         document.addEventListener("mozfullscreenchange", handleFullScreenChange);
         document.addEventListener("MSFullscreenChange", handleFullScreenChange);
+        document.addEventListener("keydown", handleKeyDown);
         return () => {
             document.removeEventListener("fullscreenchange", handleFullScreenChange);
             document.removeEventListener("webkitfullscreenchange", handleFullScreenChange);
             document.removeEventListener("mozfullscreenchange", handleFullScreenChange);
             document.removeEventListener("MSFullscreenChange", handleFullScreenChange);
+            document.removeEventListener("keydown", handleKeyDown);
         };
     }, []);
 

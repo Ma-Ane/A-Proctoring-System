@@ -18,10 +18,10 @@ def apply_agc(x):
         return x  # truly silent, don't touch it
     
     TARGET_RMS = 0.1
-    gain = min(TARGET_RMS / rms, 3.0)  # ✅ max 3x gain, not 10x
+    gain = min(TARGET_RMS / rms, 3.0)  # max 3x gain, not 10x
     x = x * gain
     
-    # ✅ soft limiting instead of hard clip — no distortion
+    # soft limiting instead of hard clip — no distortion
     x = np.tanh(x)
     return x
 
@@ -76,7 +76,7 @@ def run_audio_inference(pann_model, audio_np):
 
 # resampling to required frequency
 def resample_to_32k(audio_np: np.ndarray, original_sr: int) -> np.ndarray:
-    # ✅ Model trained at 32kHz — must match
+    # Model trained at 32kHz — must match
     if original_sr == 32000:
         return audio_np
     gcd = math.gcd(32000, original_sr)

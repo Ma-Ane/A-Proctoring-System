@@ -367,7 +367,7 @@ async def audio_ws(websocket: WebSocket, exam_id: str = Query(...), user_id: str
 
     client_sample_rate = 48000  # safe default until client sends init
 
-    # ✅ Buffer to accumulate non-silent chunks for 10-second inference
+    # Buffer to accumulate non-silent chunks for 10-second inference
     inference_buffer = []
     INFERENCE_TARGET = 32000 * 10  # 10 seconds at 32kHz after resampling
     last_violation_time = 0
@@ -393,7 +393,7 @@ async def audio_ws(websocket: WebSocket, exam_id: str = Query(...), user_id: str
             if not data:
                 continue
 
-            print(f"🎧 Received audio chunk: {len(data)} bytes")
+            print(f"Received audio chunk: {len(data)} bytes")
 
             # Convert Int16 → float32
             audio_np = np.frombuffer(data, dtype=np.int16).astype(np.float32)
@@ -428,7 +428,7 @@ async def audio_ws(websocket: WebSocket, exam_id: str = Query(...), user_id: str
                 "event": "PENDING"
             })
 
-            print(f"🎧 Buffering... {buffered_samples}/{INFERENCE_TARGET} samples")
+            print(f"Buffering... {buffered_samples}/{INFERENCE_TARGET} samples")
 
             # -------------------- FULL INFERENCE EVERY 10 SECONDS --------------------
             if buffered_samples < INFERENCE_TARGET:
@@ -485,7 +485,7 @@ async def audio_ws(websocket: WebSocket, exam_id: str = Query(...), user_id: str
 
                     flags_collection.insert_one(flag_doc)
                     last_violation_time = now
-                    print(f"📝 Audio violation saved: {violations}")
+                    print(f"Audio violation saved: {violations}")
 
                 except Exception as e:
                     print("Failed to save audio violation:", e)

@@ -29,25 +29,12 @@ def audio_np_to_wav_base64(audio_np: np.ndarray, sample_rate: int = 16000) -> st
     return base64.b64encode(buffer.read()).decode("utf-8")
 
 
-from scipy.signal import resample_poly
-import math
-
-def resample_to_16k(audio_np: np.ndarray, original_sr: int) -> np.ndarray:
-    if original_sr == 16000:
-        return audio_np
-    # resample_poly uses integer ratios — cleaner than naive resample
-    gcd = math.gcd(16000, original_sr)
-    up = 16000 // gcd
-    down = original_sr // gcd
-    return resample_poly(audio_np, up, down).astype(np.float32)
-
-
 
 # Custom file 
 from backend.ML_helper_function.faceVerification import load_face_verification_model, get_embedding, cosine_similarity
 from backend.ML_helper_function.multipleFaceDetection import load_yolo_model, detect_faces
 from backend.ML_helper_function.gazeDetection import detect_gaze
-from backend.ML_helper_function.audioVerification import rms_energy, is_silence, apply_agc, run_audio_inference
+from backend.ML_helper_function.audioVerification import rms_energy, is_silence, apply_agc, run_audio_inference, resample_to_32k
 
 app = FastAPI()
 
@@ -380,6 +367,16 @@ async def audio_ws(websocket: WebSocket, exam_id: str = Query(...), user_id: str
 
     client_sample_rate = 48000  # safe default until client sends init
 
+    # ✅ Buffer to accumulate chunks until 10 seconds — matches training clip length
+    inference_buffer = []
+    INFERENCE_TARGET = 32000 * 10  # 10 seconds at 32kHz after resampling
+    last_result = {
+        "speech": 0.0,
+        "background": 0.0,
+        "silence": 1.0,
+        "event": "SILENCE"
+    }
+
     try:
         while True:
             message = await websocket.receive()
@@ -406,16 +403,28 @@ async def audio_ws(websocket: WebSocket, exam_id: str = Query(...), user_id: str
             audio_np = np.frombuffer(data, dtype=np.int16).astype(np.float32)
             audio_np = audio_np / 32768.0
 
-            # ✅ Resample from client's native rate to 16000Hz properly
-            audio_np = resample_to_16k(audio_np, client_sample_rate)
+            # ✅ Resample from client's native rate to 32kHz — matches training sample rate
+            audio_np = resample_to_32k(audio_np, client_sample_rate)
 
-            if len(audio_np) < 16000:   # minimum 1 second (optional)
-                print("⚠️ Too small chunk")
+            # ✅ Accumulate resampled chunk into buffer
+            inference_buffer.append(audio_np)
+            buffered_samples = sum(len(c) for c in inference_buffer)
+
+            # ✅ Send last known result immediately so frontend stays responsive every second
+            await websocket.send_json(last_result)
+
+            # ✅ Only run inference when we have 10 seconds accumulated
+            if buffered_samples < INFERENCE_TARGET:
+                print(f"🎧 Buffering... {buffered_samples}/{INFERENCE_TARGET} samples")
                 continue
 
+            # ✅ Combine all buffered chunks into one 10-second clip
+            full_audio = np.concatenate(inference_buffer, axis=0)
+            inference_buffer = []  # reset buffer after inference
+
             # -------------------- SILENCE DETECTION --------------------
-            if is_silence(audio_np):
-                result = {
+            if is_silence(full_audio):
+                last_result = {
                     "speech": 0.0,
                     "background": 0.0,
                     "silence": 1.0,
@@ -423,18 +432,22 @@ async def audio_ws(websocket: WebSocket, exam_id: str = Query(...), user_id: str
                 }
 
             else:
+                # ✅ Apply AGC — was used during training preprocessing, must match
+                full_audio = apply_agc(full_audio)
+
                 print("Running audio inference...")
 
-                result = run_audio_inference(pann_model, audio_np)
+                last_result = run_audio_inference(pann_model, full_audio)
 
-                print("Prediction:", result)
+                print("Prediction:", last_result)
 
             # -------------------- SEND RESULT (saving handled via POST /audio/save_violation) --------------------
-            await websocket.send_json(result)
+            await websocket.send_json(last_result)
 
     except Exception as e:
         print("🔴 Audio client disconnected:", e)
 
+        
 
 # for the periodic verification of user during exam
 @app.post('/save-verification-flag')

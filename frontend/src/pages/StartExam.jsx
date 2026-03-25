@@ -312,7 +312,7 @@ export default function StartExam() {
         };
 
         ws.onmessage = (event) => {
-            console.log("🔥 RAW AUDIO MESSAGE RECEIVED:", event.data);
+            // console.log("🔥 RAW AUDIO MESSAGE RECEIVED:", event.data);
             const data = JSON.parse(event.data);
 
             console.log("Audio prediction:", data);
@@ -469,7 +469,7 @@ export default function StartExam() {
         };
 
     }, [examId, user]);
-    
+
 
     // -------------------- SEND IMG FRAMES --------------------
     useEffect(() => {

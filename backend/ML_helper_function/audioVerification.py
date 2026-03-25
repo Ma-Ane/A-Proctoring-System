@@ -1,6 +1,8 @@
 import numpy as np
 import torch
 import torch.nn.functional as F
+import math
+from scipy.signal import resample_poly
 
 THRESHOLD = 0.2
 
@@ -70,3 +72,14 @@ def run_audio_inference(pann_model, audio_np):
         "silence": float(silence),
         "event": classify_audio(speech, background, silence)
     }
+
+
+# resampling to required frequency
+def resample_to_32k(audio_np: np.ndarray, original_sr: int) -> np.ndarray:
+    # ✅ Model trained at 32kHz — must match
+    if original_sr == 32000:
+        return audio_np
+    gcd = math.gcd(32000, original_sr)
+    up = 32000 // gcd
+    down = original_sr // gcd
+    return resample_poly(audio_np, up, down).astype(np.float32)

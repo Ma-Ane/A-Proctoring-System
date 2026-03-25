@@ -367,15 +367,11 @@ async def audio_ws(websocket: WebSocket, exam_id: str = Query(...), user_id: str
 
     client_sample_rate = 48000  # safe default until client sends init
 
-    # ✅ Buffer to accumulate chunks until 10 seconds — matches training clip length
+    # ✅ Buffer to accumulate non-silent chunks for 10-second inference
     inference_buffer = []
     INFERENCE_TARGET = 32000 * 10  # 10 seconds at 32kHz after resampling
-    last_result = {
-        "speech": 0.0,
-        "background": 0.0,
-        "silence": 1.0,
-        "event": "SILENCE"
-    }
+    last_violation_time = 0
+    VIOLATION_COOLDOWN = 3  # seconds
 
     try:
         while True:
@@ -387,9 +383,9 @@ async def audio_ws(websocket: WebSocket, exam_id: str = Query(...), user_id: str
                     init_data = json.loads(message["text"])
                     if init_data.get("type") == "init":
                         client_sample_rate = init_data["sampleRate"]
-                        print(f"🎧 Client sample rate set to: {client_sample_rate}")
+                        print(f"Client sample rate set to: {client_sample_rate}")
                 except Exception as e:
-                    print("⚠️ Failed to parse init message:", e)
+                    print("Failed to parse init message:", e)
                 continue
 
             # -------------------- HANDLE BINARY AUDIO --------------------
@@ -403,51 +399,101 @@ async def audio_ws(websocket: WebSocket, exam_id: str = Query(...), user_id: str
             audio_np = np.frombuffer(data, dtype=np.int16).astype(np.float32)
             audio_np = audio_np / 32768.0
 
-            # ✅ Resample from client's native rate to 32kHz — matches training sample rate
+            # Resample from client's native rate to 32kHz — matches training sample rate
             audio_np = resample_to_32k(audio_np, client_sample_rate)
 
-            # ✅ Accumulate resampled chunk into buffer
-            inference_buffer.append(audio_np)
-            buffered_samples = sum(len(c) for c in inference_buffer)
-
-            # ✅ Send last known result immediately so frontend stays responsive every second
-            await websocket.send_json(last_result)
-
-            # ✅ Only run inference when we have 10 seconds accumulated
-            if buffered_samples < INFERENCE_TARGET:
-                print(f"🎧 Buffering... {buffered_samples}/{INFERENCE_TARGET} samples")
-                continue
-
-            # ✅ Combine all buffered chunks into one 10-second clip
-            full_audio = np.concatenate(inference_buffer, axis=0)
-            inference_buffer = []  # reset buffer after inference
-
-            # -------------------- SILENCE DETECTION --------------------
-            if is_silence(full_audio):
-                last_result = {
+            # -------------------- FAST SILENCE CHECK (every second) --------------------
+            # Run is_silence() immediately on every chunk — no model needed
+            # This gives frontend instant 1-second resolution for UI updates
+            if is_silence(audio_np):
+                await websocket.send_json({
                     "speech": 0.0,
                     "background": 0.0,
                     "silence": 1.0,
                     "event": "SILENCE"
-                }
+                })
+                # Silent chunk — do not add to inference buffer
+                continue
 
-            else:
-                # ✅ Apply AGC — was used during training preprocessing, must match
-                full_audio = apply_agc(full_audio)
+            # -------------------- BUFFER NON-SILENT CHUNKS --------------------
+            # Only accumulate non-silent audio for inference
+            inference_buffer.append(audio_np)
+            buffered_samples = sum(len(c) for c in inference_buffer)
 
-                print("Running audio inference...")
+            # Send non-silent signal to frontend immediately for UI
+            await websocket.send_json({
+                "speech": 0.5,
+                "background": 0.0,
+                "silence": 0.0,
+                "event": "PENDING"
+            })
 
-                last_result = run_audio_inference(pann_model, full_audio)
+            print(f"🎧 Buffering... {buffered_samples}/{INFERENCE_TARGET} samples")
 
-                print("Prediction:", last_result)
+            # -------------------- FULL INFERENCE EVERY 10 SECONDS --------------------
+            if buffered_samples < INFERENCE_TARGET:
+                continue
 
-            # -------------------- SEND RESULT (saving handled via POST /audio/save_violation) --------------------
-            await websocket.send_json(last_result)
+            # 10 seconds accumulated — run full PANN inference
+            full_audio = np.concatenate(inference_buffer, axis=0)
+            inference_buffer = []  # reset buffer after inference
+
+            # Apply AGC — was used during training preprocessing, must match
+            full_audio = apply_agc(full_audio)
+
+            print("Running audio inference...")
+            result = run_audio_inference(pann_model, full_audio)
+            print("Prediction:", result)
+
+            # -------------------- SEND RESULT TO FRONTEND --------------------
+            await websocket.send_json(result)
+
+            # -------------------- SAVE TO DB IF VIOLATION --------------------
+            now = time.time()
+            speech = result.get("speech", 0.0)
+            background = result.get("background", 0.0)
+
+            THRESHOLD = 0.2
+            violations = None
+
+            # Only flag actual violations
+            if speech > THRESHOLD:
+                violations = "Speech detected"
+            elif background > THRESHOLD:
+                violations = "Background noise"
+
+            if violations and (now - last_violation_time > VIOLATION_COOLDOWN):
+                try:
+                    # Save the 10-second clip directly on backend
+                    audio_base64 = audio_np_to_wav_base64(full_audio, sample_rate=32000)
+
+                    flag_doc = {
+                        "examId": ObjectId(exam_id),
+                        "userId": ObjectId(user_id),
+                        "timestamp": now,
+                        "violation": violations,
+
+                        "type": "audio",
+
+                        "media": {
+                            "data": audio_base64,
+                            "mime": "audio/wav"
+                        },
+
+                        "status": result
+                    }
+
+                    flags_collection.insert_one(flag_doc)
+                    last_violation_time = now
+                    print(f"📝 Audio violation saved: {violations}")
+
+                except Exception as e:
+                    print("Failed to save audio violation:", e)
 
     except Exception as e:
         print("🔴 Audio client disconnected:", e)
 
-        
+
 
 # for the periodic verification of user during exam
 @app.post('/save-verification-flag')

@@ -4,63 +4,6 @@ import { UserContext } from "../UserContext";
 
 const WS_BASE_URL = `ws://127.0.0.1:8000/ws/proctor`;
 
-// -------------------- WAV ENCODER HELPERS --------------------
-function writeString(view, offset, str) {
-    for (let i = 0; i < str.length; i++) {
-        view.setUint8(offset + i, str.charCodeAt(i));
-    }
-}
-
-function encodeWAV(chunks, sampleRate) {
-    // Concatenate all Float32 chunks into one array
-    const totalLength = chunks.reduce((sum, c) => sum + c.length, 0);
-    const combined = new Float32Array(totalLength);
-    let offset = 0;
-    for (const chunk of chunks) {
-        combined.set(chunk, offset);
-        offset += chunk.length;
-    }
-
-    // Convert Float32 → Int16
-    const int16 = new Int16Array(combined.length);
-    for (let i = 0; i < combined.length; i++) {
-        int16[i] = Math.max(-1, Math.min(1, combined[i])) * 32767;
-    }
-
-    // Build WAV header + data
-    const buffer = new ArrayBuffer(44 + int16.byteLength);
-    const view = new DataView(buffer);
-
-    writeString(view, 0, "RIFF");
-    view.setUint32(4, 36 + int16.byteLength, true);
-    writeString(view, 8, "WAVE");
-    writeString(view, 12, "fmt ");
-    view.setUint32(16, 16, true);           // chunk size
-    view.setUint16(20, 1, true);            // PCM format
-    view.setUint16(22, 1, true);            // mono
-    view.setUint32(24, sampleRate, true);   // sample rate
-    view.setUint32(28, sampleRate * 2, true); // byte rate
-    view.setUint16(32, 2, true);            // block align
-    view.setUint16(34, 16, true);           // bits per sample
-    writeString(view, 36, "data");
-    view.setUint32(40, int16.byteLength, true);
-
-    // Write audio data into buffer
-    const int16View = new Int16Array(buffer, 44);
-    int16View.set(int16);
-
-    return buffer;
-}
-
-function arrayBufferToBase64(buffer) {
-    const bytes = new Uint8Array(buffer);
-    let binary = "";
-    for (let i = 0; i < bytes.byteLength; i++) {
-        binary += String.fromCharCode(bytes[i]);
-    }
-    return btoa(binary);
-}
-
 export default function StartExam() {
     const { user, loading } = useContext(UserContext);
 
@@ -77,13 +20,6 @@ export default function StartExam() {
     const audioContextRef = useRef(null);
     const processorRef = useRef(null);
     const audioWsRef = useRef(null);
-
-    // -------------------- AUDIO VIOLATION STATE MACHINE --------------------
-    const chunkQueueRef = useRef([]);           // FIFO queue — each chunk waits for its prediction
-    const isViolatingRef = useRef(false);       // true when violation is active
-    const audioAccumulatorRef = useRef([]);     // accumulates chunks during violation
-    const silenceCounterRef = useRef(0);        // counts consecutive silence seconds
-    const violationTypeRef = useRef(null);      // tracks current violation type
 
     // cooldown tracker for each violation
     const violationCooldownRef = useRef({});
@@ -122,33 +58,6 @@ export default function StartExam() {
         else if (document.msExitFullscreen) document.msExitFullscreen();
     }
 
-    // -------------------- SAVE AUDIO VIOLATION (HTTP POST) --------------------
-    const saveAudioViolation = async (chunks, violationType, sampleRate) => {
-        try {
-            const wavBuffer = encodeWAV(chunks, sampleRate);
-            const base64 = arrayBufferToBase64(wavBuffer);
-            const duration = Math.round(chunks.reduce((sum, c) => sum + c.length, 0) / sampleRate);
-
-            // ✅ Updated to Node.js backend
-            await fetch("http://localhost:3000/flag/save_audio_violation", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    examId,
-                    userId: user._id,
-                    violation: violationType,
-                    audio_base64: base64,
-                    duration,
-                    timestamp: Date.now() / 1000
-                })
-            });
-
-            console.log(`📝 Audio violation saved: ${violationType} (${duration}s)`);
-        } catch (err) {
-            console.error("⚠️ Failed to save audio violation:", err);
-        }
-    };
-
     // -------------------- START WEBCAM --------------------
     useEffect(() => {
         // enterFullScreen();
@@ -185,11 +94,9 @@ export default function StartExam() {
                 const workletNode = new AudioWorkletNode(audioContext, "audioProcessor");
                 processorRef.current = workletNode;
 
-                // ✅ Receive chunks from worklet — queue them then send to backend
+                // ✅ Receive chunks from worklet and send to backend
                 workletNode.port.onmessage = (event) => {
                     if (event.data.type === "chunk") {
-                        // push to queue so onmessage can correlate chunk with its prediction
-                        chunkQueueRef.current.push(event.data.samples);
                         sendAudioChunk(event.data.samples);
                     }
                 };
@@ -312,7 +219,6 @@ export default function StartExam() {
         };
 
         ws.onmessage = (event) => {
-            // console.log("🔥 RAW AUDIO MESSAGE RECEIVED:", event.data);
             const data = JSON.parse(event.data);
 
             console.log("Audio prediction:", data);
@@ -320,51 +226,36 @@ export default function StartExam() {
             const speech = data.speech;
             const background = data.background;
             const silence = data.silence;
+            const event_type = data.event;
 
             const THRESHOLD = 0.5;
 
-            // ✅ Pop the chunk that corresponds to this prediction (FIFO)
-            const chunk = chunkQueueRef.current.shift();
-
-            const isSilent = silence > THRESHOLD && speech < THRESHOLD && background < THRESHOLD;
-
-            // ✅ Determine current violation type from prediction
-            let currentViolation = null;
-            if (speech > THRESHOLD) currentViolation = "Speech detected";
-            else if (background > THRESHOLD) currentViolation = "Background noise detected";
-
-            if (!isSilent && currentViolation) {
-                // ✅ CASE 1: Active violation — accumulate chunk, reset silence counter
-                isViolatingRef.current = true;
-                silenceCounterRef.current = 0;
-                violationTypeRef.current = currentViolation;
-                if (chunk) audioAccumulatorRef.current.push(chunk);
-                setAudioViolation(currentViolation);
-
-            } else if (isSilent && isViolatingRef.current) {
-                // ✅ CASE 2: Silence during violation — count towards end
-                silenceCounterRef.current += 1;
-                if (chunk) audioAccumulatorRef.current.push(chunk); // include trailing silence
-
-                if (silenceCounterRef.current >= 2) {
-                    // ✅ 2 consecutive silence seconds — violation ended, save full clip
-                    const accumulatedChunks = [...audioAccumulatorRef.current];
-                    const violationType = violationTypeRef.current;
-                    const sr = audioContextRef.current?.sampleRate || 48000;
-
-                    saveAudioViolation(accumulatedChunks, violationType, sr);
-
-                    // Reset all violation state
-                    isViolatingRef.current = false;
-                    silenceCounterRef.current = 0;
-                    audioAccumulatorRef.current = [];
-                    violationTypeRef.current = null;
-                    setAudioViolation("");
-                }
-
-            } else {
-                // ✅ CASE 3: Silence and not violating — clear UI
+            // ✅ Silence detected → clear UI
+            if (silence > THRESHOLD && speech < THRESHOLD && background < THRESHOLD) {
                 setAudioViolation("");
+                return;
+            }
+
+            // ✅ Pending — non-silent but inference not done yet — show indicator
+            if (event_type === "PENDING") {
+                setAudioViolation("Listening...");
+                return;
+            }
+
+            // ✅ Full inference result received — show violation type
+            let violations = [];
+
+            if (speech > THRESHOLD) {
+                violations.push("Speech detected");
+            }
+
+            if (background > THRESHOLD) {
+                violations.push("Background noise detected");
+            }
+
+            // ✅ If any violation exists → show it
+            if (violations.length > 0) {
+                setAudioViolation(violations.join(" + "));
             }
         };
 
@@ -375,7 +266,6 @@ export default function StartExam() {
             if (ws.readyState === WebSocket.OPEN) ws.close();
         };
     }, [examId, user]);
-
 
     // -------------------- PERIODIC IDENTITY VERIFICATION --------------------
     useEffect(() => {
@@ -469,7 +359,6 @@ export default function StartExam() {
         };
 
     }, [examId, user]);
-
 
     // -------------------- SEND IMG FRAMES --------------------
     useEffect(() => {

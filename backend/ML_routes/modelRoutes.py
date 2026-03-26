@@ -177,7 +177,7 @@ async def check_verification(user_image_embedding: str = Form(...), webcam_image
             similarity = cosine_similarity(emb1, user_embedding)
             print(f"\nCosine Similarity: {similarity:.4f}")
             threshold = 0.146     # from LFW dataset
-            threshold = 0.0146     # from LFW dataset
+            # threshold = 0.0146     # from LFW dataset
 
             if similarity >= threshold:
                 return {"message": "Same person"}
@@ -367,11 +367,15 @@ async def audio_ws(websocket: WebSocket, exam_id: str = Query(...), user_id: str
 
     client_sample_rate = 48000  # safe default until client sends init
 
-    # Buffer to accumulate non-silent chunks for 10-second inference
-    inference_buffer = []
-    INFERENCE_TARGET = 32000 * 10  # 10 seconds at 32kHz after resampling
+    # -------------------- VIOLATION STATE --------------------
+    accumulator = []                # collects non-silent chunks during active violation
+    silence_counter = 0             # counts consecutive silent seconds
+    is_violating = False            # true when a violation is currently active
+    current_violation_type = None   # tracks current violation label
     last_violation_time = 0
-    VIOLATION_COOLDOWN = 3  # seconds
+    VIOLATION_COOLDOWN = 3          # seconds between saves
+    SILENCE_LIMIT = 3               # consecutive silent seconds to end violation
+    MIN_INFERENCE_SAMPLES = 32000 * 3  # minimum 3 seconds at 32kHz before running inference
 
     try:
         while True:
@@ -406,89 +410,128 @@ async def audio_ws(websocket: WebSocket, exam_id: str = Query(...), user_id: str
             # Run is_silence() immediately on every chunk — no model needed
             # This gives frontend instant 1-second resolution for UI updates
             if is_silence(audio_np):
+                silence_counter += 1
+                print(f"Silence detected — counter: {silence_counter}/{SILENCE_LIMIT}")
+
+                # -------------------- VIOLATION END CHECK --------------------
+                # If we were violating and silence has lasted long enough → end violation
+                if is_violating and silence_counter >= SILENCE_LIMIT:
+                    print("Violation ended — running final inference on accumulated clip")
+
+                    full_audio = np.concatenate(accumulator, axis=0)
+
+                    # Apply AGC — was used during training preprocessing, must match
+                    full_audio = apply_agc(full_audio)
+
+                    print("Running final inference...")
+                    result = run_audio_inference(pann_model, full_audio)
+                    print("Final prediction:", result)
+
+                    # -------------------- SEND RESULT TO FRONTEND --------------------
+                    await websocket.send_json(result)
+
+                    # -------------------- SAVE TO DB IF VIOLATION CONFIRMED --------------------
+                    now = time.time()
+                    speech = result.get("speech", 0.0)
+                    background = result.get("background", 0.0)
+
+                    THRESHOLD = 0.2
+                    confirmed_violation = None
+
+                    # Only flag actual violations
+                    if speech > THRESHOLD:
+                        confirmed_violation = "Speech detected"
+                    elif background > THRESHOLD:
+                        confirmed_violation = "Background noise"
+
+                    if confirmed_violation and (now - last_violation_time > VIOLATION_COOLDOWN):
+                        try:
+                            # Save the full accumulated clip directly on backend
+                            audio_base64 = audio_np_to_wav_base64(full_audio, sample_rate=32000)
+
+                            flag_doc = {
+                                "examId": ObjectId(exam_id),
+                                "userId": ObjectId(user_id),
+                                "timestamp": now,
+                                "violation": confirmed_violation,
+
+                                "type": "audio",
+
+                                "media": {
+                                    "data": audio_base64,
+                                    "mime": "audio/wav"
+                                },
+
+                                "status": result
+                            }
+
+                            flags_collection.insert_one(flag_doc)
+                            last_violation_time = now
+                            print(f"Audio violation saved: {confirmed_violation}")
+
+                        except Exception as e:
+                            print("Failed to save audio violation:", e)
+
+                    # Reset all violation state
+                    accumulator = []
+                    silence_counter = 0
+                    is_violating = False
+                    current_violation_type = None
+
+                # Send silence to frontend immediately
                 await websocket.send_json({
                     "speech": 0.0,
                     "background": 0.0,
                     "silence": 1.0,
                     "event": "SILENCE"
                 })
-                # Silent chunk — do not add to inference buffer
                 continue
 
-            # -------------------- BUFFER NON-SILENT CHUNKS --------------------
-            # Only accumulate non-silent audio for inference
-            inference_buffer.append(audio_np)
-            buffered_samples = sum(len(c) for c in inference_buffer)
+            # -------------------- NON-SILENT CHUNK — ACCUMULATE --------------------
+            # Reset silence counter since audio is active
+            silence_counter = 0
+            accumulator.append(audio_np)
+            buffered_samples = sum(len(c) for c in accumulator)
 
-            # Send non-silent signal to frontend immediately for UI
-            await websocket.send_json({
-                "speech": 0.5,
-                "background": 0.0,
-                "silence": 0.0,
-                "event": "PENDING"
-            })
+            print(f"Buffering... {buffered_samples} samples accumulated")
 
-            print(f"Buffering... {buffered_samples}/{INFERENCE_TARGET} samples")
+            # -------------------- RUN INFERENCE IF ENOUGH AUDIO BUFFERED --------------------
+            # Run inference every time we have at least 3 seconds — gives model enough context
+            # Keep accumulating even after inference to build full clip for saving
+            if buffered_samples >= MIN_INFERENCE_SAMPLES:
+                full_audio_so_far = np.concatenate(accumulator, axis=0)
 
-            # -------------------- FULL INFERENCE EVERY 10 SECONDS --------------------
-            if buffered_samples < INFERENCE_TARGET:
-                continue
+                # Apply AGC — was used during training preprocessing, must match
+                agc_audio = apply_agc(full_audio_so_far)
 
-            # 10 seconds accumulated — run full PANN inference
-            full_audio = np.concatenate(inference_buffer, axis=0)
-            inference_buffer = []  # reset buffer after inference
+                print("Running inference on buffered audio...")
+                result = run_audio_inference(pann_model, agc_audio)
+                print("Prediction:", result)
 
-            # Apply AGC — was used during training preprocessing, must match
-            full_audio = apply_agc(full_audio)
+                speech = result.get("speech", 0.0)
+                background = result.get("background", 0.0)
 
-            print("Running audio inference...")
-            result = run_audio_inference(pann_model, full_audio)
-            print("Prediction:", result)
+                THRESHOLD = 0.2
 
-            # -------------------- SEND RESULT TO FRONTEND --------------------
-            await websocket.send_json(result)
+                # -------------------- UPDATE VIOLATION STATE --------------------
+                if speech > THRESHOLD:
+                    is_violating = True
+                    current_violation_type = "Speech detected"
+                elif background > THRESHOLD:
+                    is_violating = True
+                    current_violation_type = "Background noise"
 
-            # -------------------- SAVE TO DB IF VIOLATION --------------------
-            now = time.time()
-            speech = result.get("speech", 0.0)
-            background = result.get("background", 0.0)
+                # -------------------- SEND RESULT TO FRONTEND --------------------
+                await websocket.send_json(result)
 
-            THRESHOLD = 0.2
-            violations = None
-
-            # Only flag actual violations
-            if speech > THRESHOLD:
-                violations = "Speech detected"
-            elif background > THRESHOLD:
-                violations = "Background noise"
-
-            if violations and (now - last_violation_time > VIOLATION_COOLDOWN):
-                try:
-                    # Save the 10-second clip directly on backend
-                    audio_base64 = audio_np_to_wav_base64(full_audio, sample_rate=32000)
-
-                    flag_doc = {
-                        "examId": ObjectId(exam_id),
-                        "userId": ObjectId(user_id),
-                        "timestamp": now,
-                        "violation": violations,
-
-                        "type": "audio",
-
-                        "media": {
-                            "data": audio_base64,
-                            "mime": "audio/wav"
-                        },
-
-                        "status": result
-                    }
-
-                    flags_collection.insert_one(flag_doc)
-                    last_violation_time = now
-                    print(f"Audio violation saved: {violations}")
-
-                except Exception as e:
-                    print("Failed to save audio violation:", e)
+            else:
+                # Not enough audio yet — send PENDING to frontend so UI stays responsive
+                await websocket.send_json({
+                    "speech": 0.5,
+                    "background": 0.0,
+                    "silence": 0.0,
+                    "event": "PENDING"
+                })
 
     except Exception as e:
         print("🔴 Audio client disconnected:", e)

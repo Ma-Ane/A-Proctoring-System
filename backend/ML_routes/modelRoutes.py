@@ -353,6 +353,7 @@ async def proctor_ws(websocket: WebSocket, exam_id: str = Query(...), user_id: s
         print("🔴 Client disconnected:", e)
         # await websocket.close()
 
+
 # websocket for audio 
 @app.websocket("/ws/audio")
 async def audio_ws(websocket: WebSocket, exam_id: str = Query(...), user_id: str = Query(...)):

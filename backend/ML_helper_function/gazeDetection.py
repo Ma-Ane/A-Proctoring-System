@@ -340,3 +340,5 @@ def detect_gaze(img, state):
         side = "STRAIGHT"
             
     return relative_yaw, sclera, side, gaze_state, state["suspicion_score"], state["warning_count"]
+
+

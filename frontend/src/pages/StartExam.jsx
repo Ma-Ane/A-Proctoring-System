@@ -20,6 +20,7 @@ export default function StartExam() {
     const audioContextRef = useRef(null);
     const processorRef = useRef(null);
     const audioWsRef = useRef(null);
+    const audioInitializedRef = useRef(false); // guard against StrictMode double invoke
 
     // cooldown tracker for each violation
     const violationCooldownRef = useRef({});
@@ -81,23 +82,28 @@ export default function StartExam() {
         let stream;
 
         const initAudio = async () => {
+            // ✅ Guard against StrictMode double invoke
+            // Do NOT reset this in cleanup — that's what causes double init
+            if (audioInitializedRef.current) return;
+            audioInitializedRef.current = true;
+
             try {
                 stream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
-                // Native rate, no override
+                // ✅ Native rate, no override
                 const audioContext = new AudioContext();
                 audioContextRef.current = audioContext;
 
                 console.log("🎧 Actual browser sample rate:", audioContext.sampleRate);
 
-                // AudioWorklet runs on dedicated audio thread — no glitches unlike ScriptProcessor
+                // ✅ AudioWorklet runs on dedicated audio thread — no glitches unlike ScriptProcessor
                 await audioContext.audioWorklet.addModule("/audioProcessor.js");
 
                 const source = audioContext.createMediaStreamSource(stream);
                 const workletNode = new AudioWorkletNode(audioContext, "audioProcessor");
                 processorRef.current = workletNode;
 
-                // Receive chunks from worklet and send to backend
+                // ✅ Receive chunks from worklet and send to backend
                 workletNode.port.onmessage = (event) => {
                     if (event.data.type === "chunk") {
                         sendAudioChunk(event.data.samples);
@@ -109,15 +115,28 @@ export default function StartExam() {
 
             } catch (err) {
                 console.error("Mic error:", err);
+                audioInitializedRef.current = false; // only reset on actual error
             }
         };
 
         initAudio();
 
         return () => {
-            if (processorRef.current) processorRef.current.disconnect();
-            if (audioContextRef.current) audioContextRef.current.close();
-            if (stream) stream.getTracks().forEach(track => track.stop());
+            // ✅ Disconnect and close resources
+            // ✅ Do NOT reset audioInitializedRef here — resetting it allows
+            //    StrictMode's second effect invocation to initialize a second
+            //    AudioWorklet node, causing every chunk to be sent twice
+            if (processorRef.current) {
+                processorRef.current.disconnect();
+                processorRef.current = null;
+            }
+            if (audioContextRef.current) {
+                audioContextRef.current.close();
+                audioContextRef.current = null;
+            }
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+            }
         };
     }, []);
 

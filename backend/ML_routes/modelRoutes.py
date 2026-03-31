@@ -176,8 +176,8 @@ async def check_verification(user_image_embedding: str = Form(...), webcam_image
         if emb1 is not None and user_embedding is not None:
             similarity = cosine_similarity(emb1, user_embedding)
             print(f"\nCosine Similarity: {similarity:.4f}")
-            threshold = 0.146     # from LFW dataset
-            # threshold = 0.0146     # from LFW dataset
+            # threshold = 0.146     # from LFW dataset
+            threshold = 0.0146     # from LFW dataset
 
             if similarity >= threshold:
                 return {"message": "Same person"}
